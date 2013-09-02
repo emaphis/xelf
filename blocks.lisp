@@ -46,7 +46,7 @@
     (substitute #\- #\Space 
 		(string-trim " " string)))))
 
-(define-prototype block 
+(define-prototype block ()
   (excluded-fields :initform '(:quadtree-node))
   (field-collection-type :initform :list)
   ;;
