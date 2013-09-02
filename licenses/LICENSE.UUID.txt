@@ -1,0 +1,5 @@
+;;;; Author Boian Tzonev <boiantz@gmail.com>
+;;;; 2007-2011, All Rights Reserved
+;;;;
+;;;; This software may be distributed and used according to the terms of the Lisp Lesser GNU Public License (LLGPL)
+;;;; (http://opensource.franz.com/preamble.html).

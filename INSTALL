@@ -1,0 +1,70 @@
+This is the INSTALL file for Xelf.
+
+This file gives you instructions on how to download Xelf and
+compile it from the source code. 
+
+If you are on GNU/Linux, you must install certain libraries through
+your distributions' software installer: namely, sdl, sdl-image,
+sdl-mixer, sdl-gfx, and sdl-ttf. You may additionally need to install the
+corresponding *-dev versions of those packages.
+
+1. If you have not already done so, download Xelf:
+  
+   mkdir ~/src
+   cd ~/src
+   git clone git://github.com/dto/xelf.git 
+
+2. Install Quicklisp
+    
+    http://www.quicklisp.org/ It takes only a few moments to install
+    Quicklisp, and this is the best way to download and install all
+    the Common Lisp libraries that Xelf depends on---automatically.
+
+    After installing quicklisp you will see a notice about adding
+    Quicklisp to your Lisp startup file with (ql:add-to-init-file).
+
+    Doing this will make Quicklisp load automatically when you start
+    your Lisp implementation, but it isn't strictly required.
+   
+3. At the shell, 
+
+     cd ~/src/xelf    # or wherever you installed it...
+     sbcl       
+
+   Once SBCL is started, enter and execute the following Lisp
+   expressions one at a time:
+
+      ;; load dependencies via Quicklisp
+      (ql:quickload 
+    	 '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf 
+	 :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
+
+      ;; compile and load Xelf
+      (push #P"~/src/xelf/" asdf:*central-registry*)
+      (asdf:load-system :xelf)
+
+4.  My game "2x0ng" is written with Xelf, and can be downloaded via git:
+
+      	  git clone git@github.com:dto/2x0ng.git
+
+      Then in SBCL:
+      
+      (push #P"~/src/2x0ng/" asdf:*central-registry*) 
+      (asdf:load-system :2x0ng)
+      (setf xelf:*user-projects-directory* #P"~/src/")
+      (2x0ng:2x0ng)
+
+5. Getting help and reporting bugs 
+
+   When reporting bugs, please use the issue reporting system at
+   Github if possible: https://github.com/dto/xelf/issues
+
+   If not possible or if other questions arise, you can email or IRC
+   me as follows:
+
+   dto@blocky.io
+
+   You can also try the IRC channel:
+   
+   irc.freenode.org #lispgames
+
