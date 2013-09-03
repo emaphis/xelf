@@ -939,15 +939,15 @@ display."
 
 (defparameter *use-sound* t "Non-nil (the default) is to use sound. Nil disables sound.")
 
-;;; XLF resource interchange files
+;;; XELF resource interchange files
 
-(defparameter *resource-file-extension* ".blx"
-"XLF is a simple Lisp data interchange file format. An XLF file can
+(defparameter *resource-file-extension* ".xelf"
+"XELF is a simple Lisp data interchange file format. An XELF file can
 contain one or more data resources. A 'resource' is an image, sound,
 text, font, lisp program, or other data whose interpretation is up to
 the client.
 
-An XLF resource can be either self-contained, or point to an
+An XELF resource can be either self-contained, or point to an
 external file for its data.
 
 A 'resource record' defines a resource. A resource record is a
@@ -960,7 +960,7 @@ structure with the following elements:
           Corresponding handlers are the responsibility of the client.
           See also `*resource-handlers*' and `load-resource'.
 
-          The special type :blx is used to load the blx file
+          The special type :xelf is used to load the xelf file
           specified in :FILE, from (optionally) another project
           whose name is given in :DATA.
 
@@ -976,26 +976,26 @@ structure with the following elements:
               (the default is to load resources on demand.)
 
  :FILE    Name of file to load data from, if any. 
-          Relative to directory of XLF file.
+          Relative to directory of XELF file.
  :DATA    Lisp data encoding the resource itself, if any.
 
 In memory, these will be represented by resource structs (see below).
 On disk, it's Lisp data printed as text. This text should compress very
 well.
 
-The string '()' is a valid .XLF file; it contains no resources.")
+The string '()' is a valid .XELF file; it contains no resources.")
 
 (defstruct resource 
   name type properties file data object system-p)
 
-;; The extra `object' field is not saved in .XLF files; it is used to
+;; The extra `object' field is not saved in .XELF files; it is used to
 ;; store driver-dependent loaded resources (i.e. SDL image surface
 ;; objects and so on). This is used in the resource table.
 ;; The system-p field is likewise not stored. 
 
 (defun resource-to-plist (res)
   "Convert the resource record RES into a property list.
-This prepares it for printing as part of an XLF file."
+This prepares it for printing as part of an XELF file."
   (list :name (resource-name res)
 	:type (resource-type res)
 	:properties (resource-properties res)
@@ -1032,14 +1032,14 @@ This prepares it for printing as part of an XLF file."
 	  (message "Reading data from ~A... Done." filename))))))
 
 ;; Now tie it all together with routines that read and write
-;; collections of records into XLF files.
+;; collections of records into XELF files.
 
 (defun save-resource-file (filename resources)
-  "Write the RESOURCES to the XLF file FILENAME."
+  "Write the RESOURCES to the XELF file FILENAME."
   (write-sexp-to-file filename (mapcar #'resource-to-plist resources)))
 
 (defun load-resource-file (filename &optional system-p)
-  "Return a list of resources from the XLF file FILENAME."
+  "Return a list of resources from the XELF file FILENAME."
   (labels ((resourcep (s)
 	     (keywordp (first s))))
     ;; read the file
@@ -1194,7 +1194,7 @@ name PROJECT. Returns the pathname if found, otherwise nil."
     ("wav" :sample)
     ("ogg" :music)
     ("xm" :music)
-    ("blx" :buffer)
+    ("xelf" :buffer)
     ("lisp" :lisp)
     ("ttf" :ttf)))
 
@@ -1336,7 +1336,7 @@ If a record with that name already exists, it is replaced."
 (defun default-project-lisp-file (project-name)
   (find-project-file project-name (concatenate 'string project-name ".lisp")))
 
-(defparameter *object-index-filename* "index.blx")
+(defparameter *object-index-filename* "index.xelf")
 
 (defun load-project-objects (project)
   (let ((object-index-file (find-project-file project *object-index-filename*)))
@@ -1382,7 +1382,7 @@ If a record with that name already exists, it is replaced."
   (setf *project-path* (search-project-path project))
   ;; check path
   (message "Set project path to ~A" (namestring *project-path*)) 
-  ;; load any .blx files
+  ;; load any .xelf files
   (index-project project)
   ;; TODO support :with-database arg as well
   (unless without-database
@@ -1457,10 +1457,10 @@ table. File names are relative to the project PROJECT-NAME."
     (message "Loading ~A resources from file ~A:~A..." (length resources)
 	     project-name resource-file)
     (dolist (res resources)
-      (if (eq :blx (resource-type res))
-	  ;; we're including another blx file. if :data is specified,
+      (if (eq :xelf (resource-type res))
+	  ;; we're including another xelf file. if :data is specified,
 	  ;; take this as the name of the project where to look for
-	  ;; that blx file and its resources.
+	  ;; that xelf file and its resources.
 	  (let ((include-project (or (resource-data res) 
 				     project-name)))
 	    (index-resource-file include-project (find-project-file include-project
@@ -1490,7 +1490,7 @@ table."
 
 (defvar *color* "black")
 
-;;; Creating, saving, and loading object resources in XLF files
+;;; Creating, saving, and loading object resources in XELF files
 
 ;; See also the documentation string for `*resource-file-extension*'.
 
@@ -1505,7 +1505,7 @@ OBJECT as the resource data."
       (index-resource resource))))
 
 (defun save-object-resource (resource &optional (project *project*))
-  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.XLF."
+  "Save an object resource to disk as {PROJECT-NAME}/{RESOURCE-NAME}.XELF."
   (setf (resource-data resource) (serialize (resource-object resource)))
   (save-resource-file (find-project-file project 
 				(concatenate 'string (resource-name resource)
@@ -1523,7 +1523,7 @@ OBJECT as the resource data."
   (string= "*" (string (aref (resource-name resource) 0))))
 
 (defun make-resource-link (resource)
-  (make-resource :type :blx 
+  (make-resource :type :xelf 
 		 :file (concatenate 'string
 				    (resource-name resource)
 				    *resource-file-extension*)))
@@ -1534,7 +1534,7 @@ OBJECT as the resource data."
     (prog1 link 
       (if (eq :object (resource-type resource))
 	  ;; we want to index them all, whether or not we save them all.
-	  ;; make a link resource (i.e. of type :blx) to pull this in later
+	  ;; make a link resource (i.e. of type :xelf) to pull this in later
 	  (save-object-resource resource)
 	  ;; just a normal resource
 	  (setf (resource-file link) (namestring pathname)
@@ -1687,7 +1687,7 @@ also the documentation for DESERIALIZE."
 	    (cache-image-texture name))))
   
 (defun load-image-resource (resource)
-  "Loads an :IMAGE-type XLF resource from a :FILE on disk."
+  "Loads an :IMAGE-type XELF resource from a :FILE on disk."
   (initialize-textures-maybe)
   (let ((surface (sdl-image:load-image (native-namestring (resource-file resource))
 				       :alpha 255)))
@@ -1699,7 +1699,7 @@ also the documentation for DESERIALIZE."
 		    (resource-properties resource))))))
 
 (defun load-sprite-sheet-resource (resource)
-  "Loads a :SPRITE-SHEET-type XLF resource from a :FILE on disk. Looks
+  "Loads a :SPRITE-SHEET-type XELF resource from a :FILE on disk. Looks
 for :SPRITE-WIDTH and :SPRITE-HEIGHT properties on the resource to
 control the size of the individual frames or subimages."
   (let* ((image (load-image-resource resource))
@@ -1834,7 +1834,7 @@ control the size of the individual frames or subimages."
 
 (defun database-file ()
   (assert (not (null *project*)))
-  (find-project-file *project* "database.blx"))
+  (find-project-file *project* "database.xelf"))
 
 (defun save-database (&optional (database *database*))
   (assert (hash-table-p database))
@@ -1884,7 +1884,7 @@ control the size of the individual frames or subimages."
 				 ;; changes.
 				 *persistent-variables*))
 
-(defparameter *persistent-variables-file-name* "variables.blx")
+(defparameter *persistent-variables-file-name* "variables.xelf")
 
 (defun persistent-variables-file (&optional (project *project*))
   (find-project-file project *persistent-variables-file-name*))
@@ -2310,6 +2310,7 @@ of the music."
     :move "move"
     :copy "copy"
     :cut "cut"
+    :rotate "rotate"
     :paste "paste"
     :drop "downright"
     :pick-up "upleft"

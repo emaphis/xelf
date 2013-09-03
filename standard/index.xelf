@@ -217,6 +217,7 @@
 (:name "cut" :type :image :file "cut.png" :properties (:filter :linear))
 (:name "paste" :type :image :file "paste.png" :properties (:filter :linear))
 (:name "move" :type :image :file "move.png" :properties (:filter :linear))
+(:name "rotate" :type :image :file "heading.png" :properties (:filter :linear))
 (:name "resize" :type :image :file "resize.png" :properties (:filter :linear))
 (:name "bang" :type :image :file "bang.png" :properties (:filter :linear))
 (:name "define" :type :image :file "define.png" :properties (:filter :linear))
