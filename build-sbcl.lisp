@@ -1,10 +1,10 @@
 (require 'sb-posix)
 
-(load #P"~/quicklisp/setup.lisp")
+;; (load #P"~/quicklisp/setup.lisp")
 (push (merge-pathnames "lib/" *default-pathname-defaults*)
       asdf:*central-registry*)
 
-(ql:quickload '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
+;; (ql:quickload '(:lispbuilder-sdl-mixer :lispbuilder-sdl-ttf :lispbuilder-sdl-image :uuid :cl-opengl :cl-fad))
 (asdf:load-system :xelf)
 
 (push #p"/home/dto/2x0ng/" asdf:*central-registry*)
