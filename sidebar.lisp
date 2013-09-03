@@ -141,6 +141,8 @@
 	      (hit self (window-pointer-x) (window-pointer-y)))
       (draw-box x y width height :color "gray30")
       (dotimes (n displayed-rows)
-	(draw (nth (+ n row) inputs))))))
+	(let ((thing (nth (+ n row) inputs)))
+	  (when (xelfp thing) 
+	    (draw thing)))))))
 
 ;;; sidebar.lisp ends here

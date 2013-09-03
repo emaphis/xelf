@@ -35,7 +35,8 @@
     :top-left-triangle (0 0)
     :menu (1/2 0)
     :move (2/3 1)
-    :drop (0 1)
+    :drop (1/3 1)
+    :rotate (0 1)
     :pick-up (1/3 1)
     :resize (1 1)
     :define (0 0)
@@ -182,6 +183,22 @@
 	    (- x0 x)
 	    (- y0 y))))
 
+;;; Rotating objects interactively
+
+(define-handle rotate :rotate
+  :fields (initial-heading))
+
+(define-method can-pick rotate () t)
+
+(define-method pick rotate () self)
+
+(define-method drag rotate (x0 y0)
+  (with-fields (heading x) %target
+    (with-fields (initial-heading) self
+      (when (null initial-heading)
+	(setf initial-heading heading))
+      (setf heading (radian-angle (- x0 initial-heading))))))
+
 ;;; Definitions
 
 (define-handle define :define)
@@ -217,7 +234,7 @@
 ;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
-  '(evaluate drop move pick-up resize cut copy destroy))
+  '(evaluate drop move rotate resize cut copy destroy))
 
 (define-block halo target)
 
