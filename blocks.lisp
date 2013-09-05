@@ -463,16 +463,17 @@ non-nil to indicate that the block was accepted, nil otherwise."
 ;	(assert (not (contains parent self)))
 	(setf parent nil)))))
 
-(define-method drop block (new-block &optional (dx 0) (dy 0))
+(define-method drop block (new-block &optional (dx 0) (dy 0) (dz 1))
   "Add a new object to the current buffer at the current position.
-Optionally provide an x-offset DX and a y-offset DY.
+Optionally provide an x-offset DX and a y-offset DY. The optional
+z-offset DZ defaults to 1, which stacks the object on top of Self.
 See also `drop-at'."
-  (add-object (current-buffer) new-block (+ %x dx) (+ %y dy)))
+  (add-object (current-buffer) new-block (+ %x dx) (+ %y dy) (+ %z dz)))
 
-(define-method drop-at block (new-block x y)
+(define-method drop-at block (new-block x y &optional z)
   "Add the NEW-BLOCK to the current buffer at the location X,Y."
   (assert (and (numberp x) (numberp y)))
-  (add-object (current-buffer) new-block x y))
+  (add-object (current-buffer) new-block x y z))
 
 (define-method clear-buffer-data block ()
   (clear-saved-location self)
@@ -607,8 +608,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
   (bind-event-to-task self key mods 
 			 (new 'task :insert-string self (list text))))
     
-(define-method insert block (&optional x y)
-  (drop-object (current-buffer) self x y))
+(define-method insert block (&optional x y z)
+  (drop-object (current-buffer) self x y z))
 
 (define-method insert-string block (string)
   (declare (ignore string))
@@ -824,33 +825,30 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method set-location block (x y)
   (setf %x x %y y))
 
-(define-method move-to block 
-    ((x number :default 0) (y number :default 0))
+(define-method move-to block (x y &optional z)
   "Move this block to a new (X Y) location."
   (when %quadtree-node (save-location self))
-  ;; TODO TODO TODO 
-  ;; (error "Check bounding box before delete, don't delete if not needed.")
-  ;; (error "also preload all textures/sounds")
   (quadtree-delete-maybe self)
   (setf %x (cfloat x) %y (cfloat y))
+  (when z (setf %z (cfloat z)))
   (quadtree-insert-maybe self))
 
-(define-method move-to-* block
-    ((x number :default 0) 
-     (y number :default 0)
-     (z number :default 0))
-  "Move this block to a new (X Y Z) location."
-  (move-to self x y)
-  (setf %z (cfloat z)))
+;; (define-method move-to-* block
+;;     ((x number :default 0) 
+;;      (y number :default 0)
+;;      (z number :default 0))
+;;   "Move this block to a new (X Y Z) location."
+;;   (move-to self x y)
+;;   (setf %z (cfloat z)))
 
-(define-method rise block (distance)
-  (decf %z distance))
-
-(define-method fall block (distance)
+(define-method raise block (distance)
   (incf %z distance))
+
+(define-method lower block (distance)
+  (decf %z distance))
   
 (define-method move-to-depth block (depth)
-  (setf %z depth))
+  (setf %z (cfloat depth)))
 
 (define-method move-toward block 
     ((direction symbol :default :up) (steps number :initform 1))

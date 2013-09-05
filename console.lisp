@@ -700,8 +700,8 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of buffer space, so that more of the buffer shows if the window
 becomes larger.")
  
-(defparameter *z-near* 0)
-(defparameter *z-far* 100)
+(defparameter *z-near* 100)
+(defparameter *z-far* 0)
 
 (defvar *use-texture-blending* t)
 
@@ -719,8 +719,13 @@ becomes larger.")
       (setf *gl-screen-width* *screen-width*
 	    *gl-screen-height* *screen-height*)))
 
-(defun project-orthographically ()
-  (gl:disable :depth-test)
+(defun project-orthographically (&optional (depth-test t))
+  (unless depth-test
+    (gl:disable :depth-test))
+  (when depth-test
+    (gl:enable :depth-test)
+    (gl:depth-func :gequal)
+    (gl:clear-depth 1.0))
   (gl:clear :color-buffer-bit)
   (enable-texture-blending)
   (set-blending-mode :alpha)
@@ -743,7 +748,7 @@ becomes larger.")
 
 (defvar *window-x* 0)
 (defvar *window-y* 0)
-(defvar *window-z* 0)
+(defvar *window-z* 100)
 
 (defun window-pointer-x (&optional (x *pointer-x*))
   (+ x *window-x*))

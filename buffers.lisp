@@ -41,6 +41,7 @@
   (height :initform 256)
   (width :initform 256)
   (depth :initform *z-far*)
+  (layered :initform nil)
   (field-of-view :initform *field-of-view*)
   (was-key-repeat-p :initform nil)
   ;; objects and collisions
@@ -385,7 +386,7 @@
 
 (define-method project-window buffer ()
   (ecase %projection-mode 
-    (:orthographic (project-orthographically))
+    (:orthographic (project-orthographically %layered))
     (:perspective (project-with-perspective :field-of-view %field-of-view :depth %depth)))
   (transform-window :x %window-x :y %window-y :z %window-z 
 		    :scale-x %window-scale-x 
@@ -485,10 +486,10 @@
   (add-object self object)
   (move-to object x y))
 
-(define-method drop-object buffer (object &optional x y)
+(define-method drop-object buffer (object &optional x y z)
   (add-object self object)
   (when (and (numberp x) (numberp y))
-    (move-to object x y))
+    (move-to object x y (or z (+ %z 1))))
   (after-drop-hook object))
 
 (define-method drop-selection buffer ()
