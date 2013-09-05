@@ -880,7 +880,7 @@ slowdown. See also quadtree.lisp")
 	    (mapc #'draw trail))))
       ;; during dragging we draw the dragged block.
       (when drag 
-	;; (layout drag)
+	(layout drag)
 	(when (field-value :parent drag)
 	  (draw-ghost ghost))
 	;; also draw any hover-over highlights 
