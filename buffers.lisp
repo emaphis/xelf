@@ -1200,8 +1200,6 @@ block found, or nil if none is found."
 	  ;; or, regular select.
 	  ;; now find what we're touching
 	  (progn
-	    (assert (or (null focused-block)
-			(xelfp focused-block)))
 	    (multiple-value-bind (block object-p)
 		(hit-inputs self x y)
 	      (setf %object-p object-p)
