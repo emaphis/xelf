@@ -43,9 +43,9 @@
 
 (defsetf point set-point)
 
-(defvar *minibuffer* nil)
+(defvar *shell* nil)
 
-(defvar *minibuffer-open-p* nil)
+(defvar *shell-open-p* nil)
 
 (defvar *gl-window-open-p* nil)
 
@@ -2580,8 +2580,8 @@ of the music."
 ;	*notification* nil
 	*clipboard* nil
 	*event-hook* nil
-	*minibuffer* nil
-	*minibuffer-open-p* nil
+	*shell* nil
+	*shell-open-p* nil
 	*message-hook* nil
 	*updates* 0
 	*resizable* t
@@ -2619,8 +2619,8 @@ of the music."
   (setf *buffer* nil)
   (setf *blocks* nil)
   (setf *next-update-hook* nil)
-  (setf *minibuffer* nil)
-  (setf *minibuffer-open-p* nil)
+  (setf *shell* nil)
+  (setf *shell-open-p* nil)
   (setf *clipboard* nil)
   (setf *frame-rate* *default-frame-rate*)
   (setf *event-hook* nil)
@@ -2673,7 +2673,7 @@ of the music."
     (switch-to-buffer buffer)
     (setf *font* "sans-mono-11")
     (message "Welcome to Xelf. Press F1 for help.")
-    (enter-minibuffer (current-buffer))))
+    (enter-shell (current-buffer))))
 
 (defun xelf ()
   (with-session
