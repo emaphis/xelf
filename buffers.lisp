@@ -1366,9 +1366,9 @@ block found, or nil if none is found."
   (notify "Stack cleared."))
 
 ;; (define-method enter buffer ()
-  ;; (if (xelfp %point)
-  ;;     (evaluate-here-and-die %point)
-  ;;     (setf %point nil)))
+;;   (if (xelfp %point)
+;;       (evaluate-here-and-die %point)
+;;       (setf %point nil)))
 
 (define-method start buffer ()
   (with-buffer self
