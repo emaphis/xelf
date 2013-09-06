@@ -30,7 +30,7 @@
     (loop for line = (read-line stream nil)
 	  while line collect line)))
 
-(defvar *debug-on-error* t)
+(defvar *debug-on-error* nil)
 
 (defvar *author* nil)
 
