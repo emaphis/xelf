@@ -1278,31 +1278,32 @@ block found, or nil if none is found."
 	    ;; (if you hold shift, they are ALWAYS sent to buffer)
 	    (let ((it (if (holding-shift) self
 			  (or focused-block self))))
-	      (with-buffer self 
-		(cond
-		  ;; right click and control click are equivalent
-		  ((or (= button 3)
-		       (and (holding-control) (= button 1)))
-		   (alternate-tap it x y))
-		  ;; scroll wheel (middle) click and shift click are equivalent
-		  ((or (= button 2)
-		       (and (holding-shift) (= button 1)))
-		   (scroll-tap it x y))
-		  ;; vertical scrolling with mousewheel
-		  ((= button 4)
-		   (scroll-up it))
-		  ((= button 5)
-		   (scroll-down it))
-		  ;; horizontal scrolling with shift-mousewheel
-		  ((and (= button 4)
-			(holding-shift))
-		   (scroll-left it))
-		  ((and (= button 5)
-			(holding-shift))
-		   (scroll-right it))
-		  ;; plain old click
-		  (t 
-		   (tap it x y))))
+	      (when (xelfp it)
+		(with-buffer self 
+		  (cond
+		    ;; right click and control click are equivalent
+		    ((or (= button 3)
+			 (and (holding-control) (= button 1)))
+		     (alternate-tap it x y))
+		    ;; scroll wheel (middle) click and shift click are equivalent
+		    ((or (= button 2)
+			 (and (holding-shift) (= button 1)))
+		     (scroll-tap it x y))
+		    ;; vertical scrolling with mousewheel
+		    ((= button 4)
+		     (scroll-up it))
+		    ((= button 5)
+		     (scroll-down it))
+		    ;; horizontal scrolling with shift-mousewheel
+		    ((and (= button 4)
+			  (holding-shift))
+		     (scroll-left it))
+		    ((and (= button 5)
+			  (holding-shift))
+		     (scroll-right it))
+		    ;; plain old click
+		    (t 
+		     (tap it x y)))))
 	      ;;(select self focused-block))
 	      (setf click-start nil))))
       ;; clean up bookeeping
@@ -1364,11 +1365,10 @@ block found, or nil if none is found."
   (setf *stack* nil)
   (notify "Stack cleared."))
 
-(define-method enter buffer ()
-  (if (xelfp %point)
-      (progn (finish-editing %point)
-	     (evaluate-here %point))
-      (setf %point nil)))
+;; (define-method enter buffer ()
+  ;; (if (xelfp %point)
+  ;;     (evaluate-here-and-die %point)
+  ;;     (setf %point nil)))
 
 (define-method start buffer ()
   (with-buffer self

@@ -88,7 +88,7 @@
 (define-method do-sexp minibuffer-prompt (sexp)
   (with-fields (output) self
     (assert output)
-    (let ((container (get-parent output))
+    (let ((container output)
 	  (result nil))
       (assert (xelfp container))
       ;; output messages too
@@ -98,14 +98,13 @@
 		  (accept container (new 'label :line text)))))
 	;; execute lisp expressions
 	(setf result (eval (first sexp)))
-	;; we didn't crash, at least. output the reusable sexp
-	(accept container (new 'expression :line %last-line))
+	;; ;; we didn't crash, at least. output the reusable sexp
+	;; (accept container (new 'expression :line %last-line))
 	;; do something with result
 	(let ((new-block 
-		(if result
-		    (if (xelfp result)
-			result
-			(new 'expression :value result)))))
+		(if (xelfp result)
+		    result
+		    (new 'expression :value result))))
       	  ;; spit out result block, if any
       	  (when new-block 
       	    (accept container new-block)))))))
@@ -118,9 +117,9 @@
 
 (define-method do-after-evaluate minibuffer-prompt ()
   ;; print any error output
-  (when (and %parent (stringp %error-output)
+  (when (and %output (stringp %error-output)
 	     (plusp (length %error-output)))
-    (accept %parent (new 'text %error-output))))
+    (accept %output (new 'text %error-output))))
 
 ;;; The Minibuffer is a pop-up command program and Forth prompt. Only
 ;;; shows one line, like in Emacs.
@@ -137,7 +136,7 @@
     (let ((prompt (new 'minibuffer-prompt))
 	  (modeline (new 'modeline)))
       (initialize%super self)
-      (set-output prompt prompt)
+      (set-output prompt self)
       (setf inputs (list modeline prompt))
       (set-parent prompt self)
       (set-parent modeline self)
@@ -192,7 +191,7 @@
     (set-read-only prompt nil)
     (grab-focus prompt)))
 
-(defparameter *minibuffer-rows* 9)
+(defparameter *minibuffer-rows* 3)
 
 (define-method accept minibuffer (input &optional prepend)
   (declare (ignore prepend))
@@ -203,19 +202,19 @@
       ;; set parent if necessary 
       (adopt self input)
       (setf inputs 
-	    (nconc (list (first inputs) 
-			 (second inputs)
-			 input)
-		   (nthcdr 2 inputs)))
+	    (concatenate 'list
+			 (list (first inputs) 
+			       (second inputs)
+			       input)
+			 (nthcdr 2 inputs)))
       ;; drop last item in scrollback
       (let ((len (length inputs)))
 	(when (> len *minibuffer-rows*)
 	  (dolist (item (subseq inputs *minibuffer-rows*))
-	    (destroy item))
+	    (when (xelfp item) (destroy item)))
 	  (setf inputs (subseq inputs 0 (1- len)))))
       ;; 
       (add-item %sidebar (duplicate-safely input)))))
-
 
 (defparameter *minibuffer-background-color* "gray20")
 
@@ -226,8 +225,8 @@
     (draw %sidebar)))
 
 (define-method hit minibuffer (x y)
-  (or (hit %sidebar x y)
-      (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
+ (or (hit %sidebar x y)
+     (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
 	self)))
 
 

@@ -134,27 +134,29 @@
 	   (sexp (read-expression self line)))
       (setf %last-line line)
       (unless no-clear (clear-line self))
+
       (with-output-to-string (*standard-output*)
 	(when sexp (do-sexp self sexp)))
+
       (queue line %history)
       (do-after-evaluate self))))
 
 ;; (setf %error-output
-;; (if *debug-on-error*
-;;     (do-sexp self sexp)
-;;     (handler-case
-;; 	(handler-bind (((not serious-condition)
-;; 			 (lambda (c) 
-;; 			   (print-it c)
-;; 			   ;; If there's a muffle-warning
-;; 			   ;; restart associated, use it to
-;; 			   ;; avoid double-printing.
-;; 			   (let ((r (find-restart 'muffle-warning c)))
-;; 			     (when r (invoke-restart r))))))
-;; 	  (do-sexp self sexp))
-;;       (serious-condition (c)
-;; 	(print-it c))))
-;; (queue line %history))))
+;;       (if *debug-on-error*
+;; 	  (do-sexp self sexp)
+;; 	  (handler-case
+;; 	      (handler-bind (((not serious-condition)
+;; 			       (lambda (c) 
+;; 				 (print-it c)
+;; 				 ;; If there's a muffle-warning
+;; 				 ;; restart associated, use it to
+;; 				 ;; avoid double-printing.
+;; 				 (let ((r (find-restart 'muffle-warning c)))
+;; 				   (when r (invoke-restart r))))))
+;; 		(do-sexp self sexp))
+;; 	    (serious-condition (c)
+;; 	      (print-it c)))))
+
 
 (define-method newline prompt ()
   (enter self))
