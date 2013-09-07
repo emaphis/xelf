@@ -732,6 +732,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  (return-from searching this))
 	(setf this next)))))
 
+(define-method after-release-hook block ())
+
 (define-method after-place-hook block () nil)
 
 ;;; Focus events (see also buffers.lisp)

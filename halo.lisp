@@ -37,7 +37,7 @@
     :move (2/3 1)
     :drop (1/3 1)
     :rotate (0 1)
-    :pick-up (1/4 1)
+    :pick-up (1/3 0)
     :resize (1 1)
     :define (0 0)
     :close (1 0)

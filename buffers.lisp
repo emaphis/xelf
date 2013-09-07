@@ -1280,11 +1280,8 @@ block found, or nil if none is found."
 				;; hovered block did not accept drag. 
 				;; drop it back in the program layer.
 				(add-block self drag drop-x drop-y))))))
-	      ;; select the dropped block
-	      (progn 
-					;		(select self drag)
-					;		(toggle-halo drag)
-		(setf focused-block (find-uuid drag)))))
+	      ;; focus on the dropped block
+	      (focus-on self drag)))
 	  ;;
 	  ;; we were clicking instead of dragging
 	  (progn

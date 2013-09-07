@@ -25,7 +25,6 @@
   
 (define-command resize-buffer ((width (%width (current-buffer)))
 			       (height (%height (current-buffer))))
-  (message "RESIZE ~S ~S" width height)
   (resize (current-buffer) width height))
 
 ;;; commands.lisp ends here

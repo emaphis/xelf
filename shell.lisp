@@ -240,6 +240,9 @@
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     self))
 
+(define-method tap shell (x y)
+  (focus self))
+
 (define-method alternate-tap shell (x y) nil)
 
 (define-method get-prompt-label shell () (first (%inputs %%command-area)))
@@ -251,10 +254,7 @@
 (define-method get-output-items shell () 
   (%inputs (first (%inputs (get-output self)))))
 (define-method get-dialog shell ()
-  (let ((ob   (first (%inputs (get-output self)))))
-  (message "DIALOG ~S" (find-object ob))
-    ob))
-
+  (first (%inputs (get-output self))))
 
 (define-method get-argument-phrases shell ()
   (let ((container (second (get-output-items self))))
