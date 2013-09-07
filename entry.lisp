@@ -577,7 +577,7 @@
 
 (defentry keyword keywordp :default)
 (define-method update keyword ()
-  (setf %line (command-name-string %value)))
+  (setf %line (command-argument-string %value)))
 
 ;;; String display
  
@@ -609,6 +609,10 @@
       (substitute #\Space #\- 
 		  (string-trim " " name)))
      'simple-string)))
+
+(defun-memo command-argument-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (concatenate 'string (command-name-string thing) ": "))
 
 (defun arglist-input-forms (argument-forms)
   (mapcan #'(lambda (f)

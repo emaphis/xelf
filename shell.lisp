@@ -106,6 +106,11 @@
 		     "(playing)")
 		 "(empty)")))
 
+(define-method draw modeline ()
+  (with-fields (x y width height) self
+    (draw%super self)
+    (draw-line x y (+ x width) y :color "gray50")))
+
 ;;; Shell prompt
 
 (define-block (shell-prompt :super entry)
@@ -142,6 +147,16 @@
 (defparameter *minimum-shell-width* 400)
 (defparameter *shell-background-color* "gray20")
 
+(defparameter *default-command-prompt-string* "Command: ")
+
+(defun make-label (string &optional font)
+  (let ((label (new 'label)))
+    (prog1 label
+      (set-value label string)
+      (set-read-only label t)
+      (when font
+	(setf (%font label) font)))))
+
 (define-block-macro shell
     (:super phrase
      :fields 
@@ -151,9 +166,12 @@
       (spacing :initform 4))
      :inputs
      (:output (new 'phrase (new 'messenger))
-      :prompt (new 'shell-prompt)
-      :modeline (new 'modeline))))
-
+      :modeline (new 'modeline)
+      :command-area (make-sentence 
+		     (list
+		      (make-label *default-command-prompt-string*)
+		      (new 'shell-prompt))))))
+      
 (define-method insert-output shell (item)
   (unfreeze %%output)
   (accept %%output item)
@@ -171,24 +189,19 @@
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     self))
 
-;; (define-method tap shell (x y)
-;;   (flet ((try (ob)
-;; 	   (hit ob x y)))
-;;     (let ((thing (some #'try %inputs)))
-;;       (if thing 
-;; 	  (grab-focus thing)
-;; 	  (focus self)))))
-
 (define-method alternate-tap shell (x y) nil)
+
+(define-method get-prompt-label shell () (first (%inputs %%command-area)))
+(define-method set-prompt-label shell (label) (set-value (get-prompt-label self) label))
+(define-method get-prompt shell () (second (%inputs %%command-area)))
+(define-method set-prompt-line shell (line) (set-value (get-prompt self) line))
+(define-method get-modeline shell () %%modeline)
+(define-method get-output shell () %%output)
 
 (define-method focus shell ()
   (let ((prompt (get-prompt self)))
     (set-read-only prompt nil)
     (grab-focus prompt)))
-
-(define-method get-prompt shell () %%prompt)
-(define-method get-modeline shell () %%modeline)
-(define-method get-output shell () %%output)
 
 (define-method draw shell ()
   (with-style :rounded
@@ -217,6 +230,9 @@
 (define-command save-buffer-as ((filename (buffer-file-name (current-buffer))))
   (message "~S filename" filename))
   
+(define-command resize-buffer ((width (%width (current-buffer)))
+			       (height (%height (current-buffer))))
+  (resize (current-buffer) width height))
 
 
 
