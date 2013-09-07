@@ -1260,12 +1260,14 @@ block found, or nil if none is found."
 		    (if %object-p
 			(move-to drag drop-x drop-y)
 			(if (null hover)
-			    ;; ok, what layer does it go in?
-			    (if (not (contains self drag))
-				;; gameworld
-				(add-object self drag drop-x drop-y)
-				;; shell
-				(add-block self drag drop-x drop-y))
+			    ;; don't drop the shell into the world
+			    (when (not (object-eq *shell* drag))
+			      ;; ok, what layer does it go in?
+			      (if (%quadtree-node drag)
+				  ;; gameworld
+				  (add-object self drag drop-x drop-y)
+				  ;; shell
+				(add-object self drag drop-x drop-y)))
 			    ;; dropping on another block
 			    (if (accept hover drag)
 				(invalidate-layout hover)
