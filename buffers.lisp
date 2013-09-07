@@ -24,7 +24,7 @@
 
 (define-block buffer
   (name :initform nil)
-  (buffer-name :initform nil)
+  (buffer-name :initform "*untitled-buffer*")
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
   (cursor :initform nil)
@@ -129,10 +129,6 @@
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block."))
 
-(define-method buffer-file-name buffer ()
-  (when %buffer-name
-    (concatenate 'string %buffer-name ".xelf")))
-
 (defun uniquify-buffer-name (name)
   (let ((n 1)
 	(name0 name))
@@ -142,6 +138,13 @@
 	    (setf name0 (format nil "~A<~S>" name n)
 		  n (1+ n))
 	    (return-from naming name0))))))
+
+(define-method buffer-file-name buffer ()
+  (when %buffer-name
+    (concatenate 'string %buffer-name ".xelf")))
+
+;; (define-method buffer-name buffer ()
+;;   (or %buffer-name (uniquify-buffer-name "*untitled-buffer*")))
 
 (define-method begin-region buffer ()
   (setf %region-start (list (window-pointer-x) (window-pointer-y))))
@@ -838,7 +841,7 @@ slowdown. See also quadtree.lisp")
   (when (not *shell-open-p*)
     (add-shell-maybe self)
     (setf %last-focus %focused-block)
-    (focus-on self (shell-prompt) :clear-selection nil)
+    ;; (focus-on self (shell-prompt) :clear-selection nil)
     (when (null *shell-open-p*) (setf %was-key-repeat-p (key-repeat-p)))
     (setf *shell-open-p* t)
     (enable-key-repeat)))

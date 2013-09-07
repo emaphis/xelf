@@ -20,11 +20,28 @@
 
 (in-package :xelf)
 
-(define-command save-buffer-as ((filename (buffer-file-name (current-buffer))))
-  (message "~S filename" filename))
+(define-command rename-buffer
+    ((new-name (%buffer-name (current-buffer))))
+  (rename (current-buffer) new-name))
   
-(define-command resize-buffer ((width (%width (current-buffer)))
-			       (height (%height (current-buffer))))
+(define-command resize-buffer 
+    ((width (%width (current-buffer)))
+     (height (%height (current-buffer))))
   (resize (current-buffer) width height))
+
+(define-command visit-buffer
+    ((buffer-name (or (first *buffer-history*) 
+		      (buffer-name (current-buffer)))))
+  (switch-to-buffer buffer-name))
+
+(define-command create-buffer
+    ((buffer-name (uniquify-buffer-name "*untitled-buffer*")))
+  (switch-to-buffer (new 'buffer buffer-name)))
+
+(define-command paste-as-new-buffer 
+    ((buffer-name (uniquify-buffer-name "*pasted-buffer*")))
+  (switch-to-buffer (new 'buffer buffer-name))
+  (paste (current-buffer)))
+
 
 ;;; commands.lisp ends here

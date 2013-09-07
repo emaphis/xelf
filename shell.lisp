@@ -211,17 +211,33 @@
      :fields 
      ((orientation :initform :vertical)
       (frozen :initform t)
-      (entry-index :initform 0)
       (category :initform :system)
-      (spacing :initform 4))
+      (spacing :initform 4)
+      ;;
+      (entry-index :initform 0)
+      (target-x :initform 0)
+      (target-y :initform 0))
      :inputs
-     (:output (new 'phrase (new 'messenger))
+     (:output (new 'phrase)
       :modeline (new 'modeline)
       :command-area (make-sentence 
 		     (list
 		      (make-label *default-command-prompt-string*)
 		      (new 'shell-prompt))))))
+
+(define-method drag shell (x y)
+  (with-fields (target-x target-y) self
+    (setf target-x (- x (window-x)))
+    (setf target-y (- y (window-y)))
+    (move-to self x y)))
       
+(define-method layout shell ()
+  (with-fields (target-x target-y) self
+    (move-to self 
+	     (+ target-x (window-x))
+	     (+ target-y (window-y)))
+    (phrase%layout self)))
+
 (define-method insert-output shell (item)
   (unfreeze %%output)
   (accept %%output item)
@@ -241,7 +257,7 @@
     self))
 
 (define-method tap shell (x y)
-  (focus self))
+  (focus-on-entry self))
 
 (define-method alternate-tap shell (x y) nil)
 
@@ -273,18 +289,19 @@
       (setf entry-index (mod entry-index (length entries)))
       (nth entry-index entries))))
 
-(define-method focus shell ()
+(define-method focus-on-entry shell ()
   (let ((entry (current-entry self)))
     (set-read-only entry nil)
-    (grab-focus entry)))
+    (grab-focus entry)
+    (end-of-line entry)))
 
 (define-method next-entry shell ()
   (incf %entry-index)
-  (focus self))
+  (focus-on-entry self))
 
 (define-method previous-entry shell ()
   (decf %entry-index)
-  (focus self))
+  (focus-on-entry self))
 
 (define-method draw shell ()
   (with-style :rounded

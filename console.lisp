@@ -2664,7 +2664,7 @@ of the music."
 		    thing
 		    ;; just create a new buffer
 		    (find-buffer thing :create t))))
-    ;; (push (%name buffer) *buffer-history*)
+    (push (%buffer-name buffer) *buffer-history*)
     (setf *buffer* buffer)
     (at-next-update (start-alone buffer))))
 
