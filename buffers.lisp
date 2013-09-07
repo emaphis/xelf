@@ -684,11 +684,11 @@ slowdown. See also quadtree.lisp")
 (define-method edit-copy buffer ()
   (copy))
 
-(defun paste-as-new-buffer ()
-  (let ((temp (new 'buffer "*new-buffer*")))
-    (paste-from temp *clipboard*)
-    (trim temp)
-    (switch-to-buffer temp)))
+;; (defun paste-as-new-buffer ()
+;;   (let ((temp (new 'buffer "*new-buffer*")))
+;;     (paste-from temp *clipboard*)
+;;     (trim temp)
+;;     (switch-to-buffer temp)))
 
 ;; (define-method paste-cut 
 

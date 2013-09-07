@@ -137,7 +137,7 @@
       (with-output-to-string (*standard-output*)
 	(let ((expression (read-expression self line)))
 	  (evaluate-expression self expression)))
-      (queue line %history)
+      (when (plusp (length line)) (queue line %history))
       (do-after-evaluate self))))
 
 (define-method newline prompt ()
@@ -353,10 +353,6 @@
 
 (define-method alternate-tap entry (x y)
   (toggle-halo self))
-
-;; (define-method alternate-tap entry (x y)
-;;   (with-notifications 
-;;       (execute (list %value))))
 
 (define-method scroll-tap entry (x y))
 

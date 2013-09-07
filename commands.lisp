@@ -41,7 +41,8 @@
 (define-command paste-as-new-buffer 
     ((buffer-name (uniquify-buffer-name "*pasted-buffer*")))
   (switch-to-buffer (new 'buffer buffer-name))
-  (paste (current-buffer)))
+  (paste (current-buffer))
+  (trim (current-buffer)))
 
 
 ;;; commands.lisp ends here

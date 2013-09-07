@@ -281,7 +281,9 @@
 	(mapcar #'second (mapcar #'%inputs (get-argument-phrases self)))))
 
 (define-method evaluate-output shell ()
-  (replace-output self (list (make-phrase (evaluate (get-dialog self))))))
+  (replace-output self (list (make-phrase (evaluate (get-dialog self)))))
+  (next-entry self)
+  (next-entry self))
 
 (define-method current-entry shell ()
   (let ((entries (get-entries self)))
