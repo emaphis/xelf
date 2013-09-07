@@ -143,6 +143,55 @@
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
 
+;;; Command forms
+
+(defun-memo command-name-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (coerce 
+     (string-capitalize 
+      (substitute #\Space #\- 
+		  (string-trim " " name)))
+     'simple-string)))
+
+(defun-memo command-argument-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (concatenate 'string (command-name-string thing) ": "))
+
+(defun arglist-input-forms (argument-forms)
+  (mapcar #'(lambda (f)
+	      `(make-sentence 
+		(list
+		 (new 'keyword :value ,(make-keyword (first f)) :read-only t)
+		 (new 'expression :value ,(second f) :read-only nil))))
+	  argument-forms))
+
+(defun command-inputs (name arglist)
+  `((let ((label (new 'label :read-only t :font "sans-condensed-bold-18")))
+     (prog1 label (set-value label ,(command-name-string (symbol-name name)))))
+    (make-paragraph (list ,@(arglist-input-forms arglist)))))
+
+(defmacro define-command (name arglist &body body)
+  `(progn
+     (defun ,name (&key ,@arglist) ,@body)
+     (export ',name)
+     (define-block-macro ,name 
+	 (:super phrase
+	  :fields ((orientation :initform :vertical))
+	  :inputs ,(command-inputs name arglist))
+       ;; when evaluating this dialog,
+       ;; call the command function
+       (apply #'funcall #',name
+	      ;; with the evaluated results of
+	      (mapcar #'evaluate 
+		      ;; all the argument names/values
+		      (mapcan #'identity 
+			      (mapcar #'%inputs 
+				      ;; from the dialog box
+				      (%inputs (second %inputs)))))))))
+
 ;;; The shell is a command prompt and message output area.
 
 (defparameter *minimum-shell-width* 400)
@@ -163,6 +212,7 @@
      :fields 
      ((orientation :initform :vertical)
       (frozen :initform t)
+      (entry-index :initform 0)
       (category :initform :system)
       (spacing :initform 4))
      :inputs
@@ -204,11 +254,34 @@
 (define-method set-prompt-line shell (line) (set-value (get-prompt self) line))
 (define-method get-modeline shell () %%modeline)
 (define-method get-output shell () %%output)
+(define-method get-output-items shell () 
+  (message "OUTPUT ITEMS: ~S" (mapcar #'find-object (%inputs (first (%inputs (get-output self))))))
+  (%inputs (first (%inputs (get-output self)))))
+
+(define-method get-entries shell ()
+  (cons (get-prompt self)
+	(mapcar #'second (mapcar #'%inputs (%inputs (second (get-output-items self)))))))
+
+(define-method current-entry shell ()
+  (let ((entries (get-entries self)))
+    (with-fields (entry-index) self 
+      (setf entry-index (mod entry-index (length entries)))
+      (message "INDEX ~S //// ENTRIES ~S" entry-index entries)
+      (nth entry-index entries))))
 
 (define-method focus shell ()
-  (let ((prompt (get-prompt self)))
-    (set-read-only prompt nil)
-    (grab-focus prompt)))
+  (let ((entry (current-entry self)))
+    (message "ENTRY: ~S" (find-object entry))
+    (set-read-only entry nil)
+    (grab-focus entry)))
+
+(define-method next-entry shell ()
+  (incf %entry-index)
+  (focus self))
+
+(define-method previous-entry shell ()
+  (decf %entry-index)
+  (focus self))
 
 (define-method draw shell ()
   (with-style :rounded
@@ -216,35 +289,11 @@
   (mapc #'draw %inputs))
 
 (defun shell () *shell*)
-
-(defun shell-prompt ()
-  (get-prompt (shell)))
-
-(defun shell-modeline ()
-  (get-modeline (shell)))
-
-(defun shell-output ()
-  (get-output (shell)))
-
-(defun shell-insert-output (object)
-  (insert-output (shell) object))
-
-(defun shell-destroy-output ()
-  (destroy-output (shell)))
-
-(defun shell-evaluate-output ()
-  (evaluate-output (shell)))
-
-;;; Shell commands
-
-(define-command save-buffer-as ((filename (buffer-file-name (current-buffer))))
-  (message "~S filename" filename))
-  
-(define-command resize-buffer ((width (%width (current-buffer)))
-			       (height (%height (current-buffer))))
-  (resize (current-buffer) width height))
-
-
-
+(defun shell-prompt () (get-prompt (shell)))
+(defun shell-modeline () (get-modeline (shell)))
+(defun shell-output () (get-output (shell)))
+(defun shell-insert-output (object) (insert-output (shell) object))
+(defun shell-destroy-output () (destroy-output (shell)))
+(defun shell-evaluate-output ()  (evaluate-output (shell)))
 
 ;;; shell.lisp ends here

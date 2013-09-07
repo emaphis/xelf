@@ -39,7 +39,8 @@
 	       (:file "halo" :depends-on ("trees"))
 	       (:file "sidebar" :depends-on ("halo"))
 	       (:file "shell" :depends-on ("sidebar"))
-	       (:file "buffers" :depends-on ("shell"))))
+	       (:file "commands" :depends-on ("shell"))
+	       (:file "buffers" :depends-on ("commands"))))
 
 	       ;; (:file "syntax" :depends-on ("blocks"))))
 ;	       (:file "trees" :depends-on ("phrase"))

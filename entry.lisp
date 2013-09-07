@@ -343,6 +343,12 @@
   (label-color :initform *default-entry-label-color*)
   type-specifier value)
 
+(define-method tab entry ()
+  (next-entry (shell)))
+
+(define-method backtab entry ()
+  (previous-entry (shell)))
+
 (define-method alternate-tap entry (x y)
   (toggle-halo self))
 
@@ -596,56 +602,5 @@
   (when (stringp value)
     (setf %value value)
     (setf %line value)))
-
-;;; Command forms
-
-(defun-memo command-name-string (thing)
-    (:key #'first :test 'equal :validator #'identity)
-  (let ((name (etypecase thing
-		(symbol (symbol-name thing))
-		(string thing))))
-    (coerce 
-     (string-capitalize 
-      (substitute #\Space #\- 
-		  (string-trim " " name)))
-     'simple-string)))
-
-(defun-memo command-argument-string (thing)
-    (:key #'first :test 'equal :validator #'identity)
-  (concatenate 'string (command-name-string thing) ": "))
-
-(defun arglist-input-forms (argument-forms)
-  (mapcar #'(lambda (f)
-	      `(make-sentence 
-		(list
-		 (new 'keyword :value ,(make-keyword (first f)) :read-only t)
-		 (new 'expression :value ,(second f) :read-only nil))))
-	  argument-forms))
-
-(defun command-inputs (name arglist)
-  `((let ((label (new 'label :read-only t :font "sans-condensed-bold-18")))
-     (prog1 label (set-value label ,(command-name-string (symbol-name name)))))
-    (make-paragraph (list ,@(arglist-input-forms arglist)))))
-
-;; (command-inputs 'foo '((:a 1) (:b 2)))
-
-(defmacro define-command (name arglist &body body)
-  `(progn
-     (defun ,name (&key ,@arglist) ,@body)
-     (export ',name)
-     (define-block-macro ,name 
-	 (:super phrase
-	  :fields ((orientation :initform :vertical))
-	  :inputs ,(command-inputs name arglist))
-       ;; when evaluating this dialog,
-       ;; call the command function
-       (apply #'funcall #',name
-	      ;; with the evaluated results of
-	      (mapcar #'evaluate 
-		      ;; all the argument names/values
-		      (mapcan #'identity 
-			      (mapcar #'%inputs 
-				      ;; from the dialog box
-				      (%inputs (second %inputs)))))))))
 
 ;;; entry.lisp ends here
