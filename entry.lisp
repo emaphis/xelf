@@ -615,16 +615,17 @@
   (concatenate 'string (command-name-string thing) ": "))
 
 (defun arglist-input-forms (argument-forms)
-  (mapcan #'(lambda (f)
-	      (list 
-	       (list 'new '(quote keyword) :value (make-keyword (first f)) :read-only t)
-	       (list 'new '(quote expression) :value (second f) :read-only nil)))
+  (mapcar #'(lambda (f)
+	      `(make-sentence 
+		(list
+		 (new 'keyword :value ,(make-keyword (first f)) :read-only t)
+		 (new 'expression :value ,(second f) :read-only nil))))
 	  argument-forms))
 
 (defun command-inputs (name arglist)
   `((let ((label (new 'label :read-only t :font "sans-condensed-bold-18")))
      (prog1 label (set-value label ,(command-name-string (symbol-name name)))))
-    (make-sentence (list ,@(arglist-input-forms arglist)))))
+    (make-paragraph (list ,@(arglist-input-forms arglist)))))
 
 ;; (command-inputs 'foo '((:a 1) (:b 2)))
 
@@ -639,6 +640,8 @@
        (prog1 nil
 	 (apply #'funcall #',name
 		(mapcar #'evaluate 
-			(%inputs (second %inputs))))))))
+			(mapcan #'identity 
+				(mapcar #'%inputs 
+					(%inputs (second %inputs))))))))))
 
 ;;; entry.lisp ends here
