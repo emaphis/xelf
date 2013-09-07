@@ -512,6 +512,7 @@
     (enter%super self :no-clear)))
 
 (define-method execute entry ()
+  (enter self)
   (evaluate-output (shell)))
 
 (define-method evaluate-here entry ()

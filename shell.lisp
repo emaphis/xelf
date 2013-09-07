@@ -268,7 +268,8 @@
 (define-method get-modeline shell () %%modeline)
 (define-method get-output shell () %%output)
 (define-method get-output-items shell () 
-  (%inputs (first (%inputs (get-output self)))))
+  (let ((phrase (first (%inputs (get-output self)))))
+    (when phrase (%inputs phrase))))
 (define-method get-dialog shell ()
   (first (%inputs (get-output self))))
 
@@ -281,9 +282,7 @@
 	(mapcar #'second (mapcar #'%inputs (get-argument-phrases self)))))
 
 (define-method evaluate-output shell ()
-  (replace-output self (list (make-phrase (evaluate (get-dialog self)))))
-  (next-entry self)
-  (next-entry self))
+  (replace-output self (list (make-phrase (evaluate (get-dialog self))))))
 
 (define-method current-entry shell ()
   (let ((entries (get-entries self)))
