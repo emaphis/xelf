@@ -634,7 +634,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:a (:control) :beginning-of-line)
     (:e (:control) :end-of-line)
     (:tab nil :tab)
-    (:tab (:control) :backtab)
+    (:tab (:shift) :backtab)
     (:return nil :enter)
     (:return (:control) :execute)
     ;; (:return (:control) :evaluate-here)

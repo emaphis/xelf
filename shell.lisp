@@ -56,6 +56,8 @@
 			*block-font*))))))
     (setf %width (+ width (dash 5)))))
 			     
+(defparameter *messenger-color* "gray80")
+
 (define-method draw messenger ()
 ;;  (draw-background self)
   (with-fields (x y width height) self
@@ -65,7 +67,7 @@
 	  (unless (<= (length (get-messages self)) n)
 	    (draw-string (nth n (get-messages self))
 			 x0 y0
-			 :color "gray20"
+			 :color *messenger-color*
 			 :font *block-font*)
 	    (decf y0 (font-height *font*)))))))
 
@@ -137,9 +139,6 @@
     (when result
       (replace-output (shell) (list (make-phrase result))))))
 
-(define-method execute shell-prompt ()
-  (evaluate-output (shell)))
-
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
 
@@ -180,8 +179,8 @@
      (define-block-macro ,name 
 	 (:super phrase
 	  :fields ((orientation :initform :vertical))
-	  :inputs ,(command-inputs name arglist))
-       ;; when evaluating this dialog,
+	  :inputs ,(command-inputs name arglist)))
+     (define-method evaluate ,name ()
        ;; call the command function
        (apply #'funcall #',name
 	      ;; with the evaluated results of
@@ -197,7 +196,7 @@
 (defparameter *minimum-shell-width* 400)
 (defparameter *shell-background-color* "gray20")
 
-(defparameter *default-command-prompt-string* "Command: ")
+(defparameter *default-command-prompt-string* "> ")
 
 (defun make-label (string &optional font)
   (let ((label (new 'label)))
@@ -237,11 +236,6 @@
   (dolist (item items)
     (insert-output self item)))
 
-(define-method evaluate-output shell ()
-  (replace-output self
-		  (list
-		   (make-phrase (mapc #'evaluate (%inputs %%output))))))
-
 (define-method hit shell (x y)
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     self))
@@ -255,23 +249,32 @@
 (define-method get-modeline shell () %%modeline)
 (define-method get-output shell () %%output)
 (define-method get-output-items shell () 
-  (message "OUTPUT ITEMS: ~S" (mapcar #'find-object (%inputs (first (%inputs (get-output self))))))
   (%inputs (first (%inputs (get-output self)))))
+(define-method get-dialog shell ()
+  (let ((ob   (first (%inputs (get-output self)))))
+  (message "DIALOG ~S" (find-object ob))
+    ob))
+
+
+(define-method get-argument-phrases shell ()
+  (let ((container (second (get-output-items self))))
+    (when (xelfp container) (%inputs container))))
 
 (define-method get-entries shell ()
   (cons (get-prompt self)
-	(mapcar #'second (mapcar #'%inputs (%inputs (second (get-output-items self)))))))
+	(mapcar #'second (mapcar #'%inputs (get-argument-phrases self)))))
+
+(define-method evaluate-output shell ()
+  (replace-output self (list (make-phrase (evaluate (get-dialog self))))))
 
 (define-method current-entry shell ()
   (let ((entries (get-entries self)))
     (with-fields (entry-index) self 
       (setf entry-index (mod entry-index (length entries)))
-      (message "INDEX ~S //// ENTRIES ~S" entry-index entries)
       (nth entry-index entries))))
 
 (define-method focus shell ()
   (let ((entry (current-entry self)))
-    (message "ENTRY: ~S" (find-object entry))
     (set-read-only entry nil)
     (grab-focus entry)))
 

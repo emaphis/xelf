@@ -344,6 +344,8 @@
   type-specifier value)
 
 (define-method tab entry ()
+  (setf %old-line nil)
+  (enter self)
   (next-entry (shell)))
 
 (define-method backtab entry ()
@@ -380,10 +382,13 @@
     (finish-editing self)))
 
 (define-method lose-focus entry ()
-  (cancel-editing self)
-  (when (null %value)
-    ;; user never typed anything here.
-    (destroy self)))
+  (setf %old-line nil)
+  (enter self))
+
+  ;; (cancel-editing self)
+  ;; (when (null %value)
+  ;;   ;; user never typed anything here.
+  ;;   (destroy self)))
 
 (define-method as-drag entry (x y)
   (declare (ignore x y))
@@ -509,6 +514,9 @@
 (define-method enter entry ()
   (unless %read-only
     (enter%super self :no-clear)))
+
+(define-method execute entry ()
+  (evaluate-output (shell)))
 
 (define-method evaluate-here entry ()
   (finish-editing self)

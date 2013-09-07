@@ -587,7 +587,7 @@ slowdown. See also quadtree.lisp")
 	(when objects
 	  (quadtree-fill objects quadtree))))))
 
-(define-method resize buffer (new-height new-width)
+(define-method resize buffer (new-width new-height)
   (assert (and (plusp new-height)
 	       (plusp new-width)))
   (with-fields (height width quadtree objects) self
@@ -608,7 +608,7 @@ slowdown. See also quadtree.lisp")
 	      (find-bounding-box objects)
 	    ;; resize the buffer so that everything just fits
 	    (setf %x 0 %y 0)
-	    (resize self (- bottom top) (- right left))
+	    (resize self (- right left) (- bottom top))
 	    ;; move all the objects
 	    (dolist (object objects)
 	      (with-fields (x y) object
@@ -710,7 +710,7 @@ slowdown. See also quadtree.lisp")
 	    (unless (bounding-box-contains 
 		     (multiple-value-list (bounding-box self))
 		     objects-bounding-box)
-	      (resize self bottom right)))))))
+	      (resize self right bottom)))))))
 
 (defmacro with-new-buffer (&body body)
   `(with-buffer (clone *buffer-prototype*) 
@@ -824,8 +824,8 @@ slowdown. See also quadtree.lisp")
       (paste-from (current-buffer) buffer border border)
       (destroy buffer)
       (resize (current-buffer)
-	      (+ height (* border 2))
-	      (+ width (* border 2))))))
+	      (+ width (* border 2))
+	      (+ height (* border 2))))))
 
 ;;; The Program is an optional layer of objects on top of the buffer
 
