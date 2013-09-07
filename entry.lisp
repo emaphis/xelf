@@ -573,6 +573,12 @@
 (define-method evaluate expression ()
   (eval (get-value self)))
 
+;;; Keyword
+
+(defentry keyword keywordp :default)
+(define-method update keyword ()
+  (setf %line (command-name-string %value)))
+
 ;;; String display
  
 (defentry label stringp "")
@@ -607,12 +613,12 @@
 (defun arglist-input-forms (argument-forms)
   (mapcan #'(lambda (f)
 	      (list 
-	       (list 'new '(quote expression) :value (make-keyword (first f)) :read-only t)
+	       (list 'new '(quote keyword) :value (make-keyword (first f)) :read-only t)
 	       (list 'new '(quote expression) :value (second f) :read-only nil)))
 	  argument-forms))
 
 (defun command-inputs (name arglist)
-  `((let ((label (new 'label :read-only t :font "sans-bold-16")))
+  `((let ((label (new 'label :read-only t :font "sans-condensed-bold-18")))
      (prog1 label (set-value label ,(command-name-string (symbol-name name)))))
     (make-sentence (list ,@(arglist-input-forms arglist)))))
 

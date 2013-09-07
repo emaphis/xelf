@@ -24,6 +24,7 @@
 
 (define-block buffer
   (name :initform nil)
+  (buffer-name :initform nil)
   (variables :initform nil 
 	     :documentation "Hash table mapping values to values, local to the current buffer.")
   (cursor :initform nil)
@@ -127,6 +128,10 @@
 	      :documentation "A cons (X . Y) of widget location at start of dragging.")
   (drag-offset :initform nil
 	       :documentation "A cons (X . Y) of relative mouse click location on dragged block."))
+
+(define-method buffer-file-name buffer ()
+  (when %buffer-name
+    (concatenate 'string %buffer-name ".xelf")))
 
 (defun uniquify-buffer-name (name)
   (let ((n 1)
@@ -1002,17 +1007,18 @@ slowdown. See also quadtree.lisp")
 			cursor)))
 	  (when (xelfp thing)
 	    (glide-follow self thing)
-	    (update-window-glide self)))
-	  ;; now outside the quadtree,
-	  ;; possibly update the program layer
-	  (with-buffer self
-	    (when *shell-open-p*
-	      (with-quadtree nil
-		(layout self)
-		(layout-program-objects self)
-		(update-program-objects self)
-		(when *shell* (update *shell*))
-		(clear-deleted-program-objects self)))))))))
+	    (update-window-glide self))))))
+    ;;
+    ;; now outside the quadtree,
+    ;; possibly update the program layer
+    (with-buffer self
+      (when *shell-open-p*
+	(with-quadtree nil
+	  (layout self)
+	  (layout-program-objects self)
+	  (update-program-objects self)
+	  (when *shell* (update *shell*))
+	  (clear-deleted-program-objects self))))))
     
 (define-method evaluate buffer ()
   (prog1 self

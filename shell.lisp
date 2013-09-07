@@ -150,9 +150,9 @@
       (category :initform :system)
       (spacing :initform 4))
      :inputs
-     (:modeline (new 'modeline)
-      :output (new 'phrase (new 'messenger))
-      :prompt (new 'shell-prompt))))
+     (:output (new 'phrase (new 'messenger))
+      :prompt (new 'shell-prompt)
+      :modeline (new 'modeline))))
 
 (define-method insert-output shell (item)
   (unfreeze %%output)
@@ -171,8 +171,13 @@
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     self))
 
-(define-method tap shell (x y)
-  (focus self))
+;; (define-method tap shell (x y)
+;;   (flet ((try (ob)
+;; 	   (hit ob x y)))
+;;     (let ((thing (some #'try %inputs)))
+;;       (if thing 
+;; 	  (grab-focus thing)
+;; 	  (focus self)))))
 
 (define-method alternate-tap shell (x y) nil)
 
@@ -209,8 +214,8 @@
 
 ;;; Shell commands
 
-(define-command save-as ((first-argument 10) (second-argument "hello"))
-  (message "SAVE AS ~S/~S" first-argument second-argument))
+(define-command save-buffer-as ((filename (buffer-file-name (current-buffer))))
+  (message "~S filename" filename))
   
 
 

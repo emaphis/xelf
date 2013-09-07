@@ -633,6 +633,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:d (:control) :delete-char)
     (:a (:control) :beginning-of-line)
     (:e (:control) :end-of-line)
+    (:tab nil :tab)
+    (:tab (:control) :backtab)
     (:return nil :enter)
     ;; (:return (:control) :evaluate-here)
     ;; (:delete (:alt) :delete-word)
