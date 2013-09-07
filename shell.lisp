@@ -120,7 +120,13 @@
   nil)
 
 (define-method enter shell-prompt (&optional no-clear)
-  (prompt%enter self))
+  (prompt%enter self)
+  (with-fields (result) self
+    (replace-contents *shell*
+			(list 
+			 (if (xelfp result) 
+			     result (make-phrase result))))))
+
 
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
@@ -170,14 +176,6 @@
   (let ((prompt (get-prompt self)))
     (set-read-only prompt nil)
     (grab-focus prompt)))
-
-(define-method enter shell ()
-  (let ((prompt %%prompt))
-    (with-fields (result) prompt
-      (enter prompt)
-      (if (xelfp result) 
-	  (accept %%contents result)
-	  (accept %%contents (make-phrase result))))))
 	;;
 ;;	(replace-contents self (list result))))))
 
