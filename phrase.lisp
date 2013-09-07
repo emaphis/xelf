@@ -253,6 +253,7 @@
 	 (:super phrase
 	  :fields ((orientation :initform :horizontal))
 	  :inputs ,(arglist-input-forms arglist))
-       (apply #'funcall #',name (mapcar #'evaluate %inputs)))))
+       (prog1 nil
+	 (apply #'funcall #',name (mapcar #'evaluate %inputs))))))
 
 ;;; phrase.lisp ends here

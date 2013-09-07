@@ -88,12 +88,10 @@
      :inputs (:buffer-id (new 'label :read-only t)
 	      :position (new 'label :read-only t)
 	      :mode (new 'label :read-only t)
-	      :objects (new 'label :read-only t)
-	      :project-id (new 'label :read-only t))))
+	      :objects (new 'label :read-only t))))
 
 (define-method update modeline ()
   (mapc #'pin %inputs)
-  (set-value %%project-id *project*)
   (set-value %%buffer-id (or (%buffer-name (current-buffer)) "*untitled-buffer*"))
   (set-value %%objects (modeline-database-string (hash-table-count (%objects (current-buffer)))
 						 (hash-table-count *database*)))
@@ -131,9 +129,9 @@
 (define-method enter shell-prompt (&optional no-clear)
   (prompt%enter self)
   (with-fields (result) self
-    (insert-output (shell)
-		   (if (xelfp result) 
-		       result (make-phrase result)))))
+    (replace-output (shell)
+		    (list (if (xelfp result) 
+			      result (make-phrase result))))))
 
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
@@ -160,11 +158,11 @@
   (accept %%output item)
   (freeze %%output))
 
-(define-method clear-output shell ()
+(define-method destroy-output shell ()
   (mapc #'destroy (%inputs %%output)))
 
 (define-method replace-output shell (items)
-  (clear-output self)
+  (destroy-output self)
   (dolist (item items)
     (insert-output self item)))
 
@@ -205,8 +203,8 @@
 (defun shell-insert-output (object)
   (insert-output (shell) object))
 
-(defun shell-clear-output ()
-  (clear-output (shell)))
+(defun shell-destroy-output ()
+  (destroy-output (shell)))
 
 ;;; Shell commands
 

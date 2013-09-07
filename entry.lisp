@@ -450,9 +450,7 @@
 	  (when (plusp (length %label))
 	    (draw-label self))
 	  ;; draw shaded area for input
-	  (when (or (not background)
-		    (not (phrasep %parent))
-		    (not read-only))
+	  (when (not read-only)
 	    (draw-input-area self :inactive)))
 	    ;; ;; draw indicators
 	    ;; (draw-indicators self :inactive)))
