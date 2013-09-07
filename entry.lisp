@@ -44,6 +44,7 @@
 
 (define-block prompt
   (text-color :initform "gray20")
+  (font :initform "sans-bold-11")
   (read-only :initform t)
   (point :initform 0 :documentation "Integer index of cursor within prompt line.")
   (line :initform "" :documentation "Currently edited command line.")
@@ -194,17 +195,17 @@
 	(font-text-width (if (<= point (length line))
 			     (subseq line 0 point)
 			     " ")
-			 *font*)
-	(if x-offset 0 (font-text-width prompt-string *font*)))
+			 %font)
+	(if x-offset 0 (font-text-width prompt-string %font)))
      ;;
      (+ y (or y-offset 0) *default-prompt-margin*)
      *default-cursor-width*
-     (* (font-height *font*) 0.8)
+     (* (font-height %font) 0.8)
      :color color
      :blink blink)))
 
 (define-method label-width prompt () 
-  (font-text-width %prompt-string *font*))
+  (font-text-width %prompt-string %font))
 
 (define-method label-string prompt () %prompt-string)
 
@@ -229,7 +230,7 @@
 		    (dotimes (ix (length line))
 		      (when (< tx (font-text-width 
 				   (subseq line 0 ix)
-				   *font*))
+				   %font))
 			(return-from measuring ix))))))
 	    (if (numberp click-index)
 		(setf point click-index)
@@ -241,9 +242,9 @@
   (with-fields (line) self
     (resize self 
 	    (+ 12 (* 5 *dash*)
-	       (font-text-width line *font*)
-	       (font-text-width *default-prompt-string* *font*))
-	    (+ (* 2 *default-prompt-margin*) (font-height *font*)))))
+	       (font-text-width line %font)
+	       (font-text-width *default-prompt-string* %font))
+	    (+ (* 2 *default-prompt-margin*) (font-height %font)))))
 
 (define-method draw-input-area prompt (state)
   ;; draw shaded area for data entry.
@@ -251,11 +252,11 @@
   (with-fields (x y parent label line) self
     (assert (not (null line)))
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *font*)))
+	  (line-width (font-text-width line %font)))
       (draw-box (dash 0.5 x label-width)
 		(dash 0.2 y)
 		(dash 2 line-width)
-		(dash 0.8 (font-height *font*))
+		(dash 0.8 (font-height %font))
 		:color (ecase state
 			 (:active *active-prompt-color*)
 			 (:inactive 
@@ -268,8 +269,8 @@
 (define-method draw-indicators prompt (state)
   (with-fields (x y options text-color width parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *font*))
-	  (fh (font-height *font*)))
+	  (line-width (font-text-width line %font))
+	  (fh (font-height %font)))
       ;; (draw-indicator :top-left-triangle
       ;; 		      (dash 1 x 1 label-width)
       ;; 		      (dash 1 y)
@@ -284,14 +285,14 @@
     (with-fields (cursor-clock x y width line parent) self
       (let* ((label (label-string self))
 	     (label-width (label-width self))
-	     (line-width (font-text-width line *font*)))
+	     (line-width (font-text-width line %font)))
 	;; draw shaded area for input
 	(draw-input-area self :active)
 	;; draw cursor.
 	(update-cursor-clock self)
 	(draw-cursor self 
 		     :x-offset
-		     (dash 3 (font-text-width label *font*))
+		     (dash 3 (font-text-width label %font))
 		     :blink t)
 	;; draw highlighted indicators
 	(draw-indicators self :active)
@@ -312,7 +313,7 @@
 		     :color (if nil
 				%text-color
 				*default-prompt-outside-text-color*)
-		     :font *font*)
+		     :font %font)
  	(update-layout-maybe self)
 	;; draw background for input
 	(unless %read-only
@@ -325,7 +326,7 @@
 		     (dash 1 x (label-width self))
 		     (+ y strings-y)
 		     :color %text-color
-		     :font *font*)))))
+		     :font %font)))))
 
 ;;; General-purpose data entry block for any type of word
 
@@ -383,7 +384,7 @@
   (if %pinned (phrase-root self) self))
 
 (define-method initialize entry 
-    (&key value type-specifier options label label-color parent locked line
+    (&key value type-specifier options label label-color parent locked line font
     read-only)
   (initialize%super self)
   ;(assert (and value type-specifier))
@@ -405,6 +406,7 @@
   (setf %label 
 	(or label 
 	    (getf options :label)))
+  (when font (setf %font font))
   (when label-color (setf %label-color label-color)))
 
 (define-method set-read-only entry (&optional (value t))
@@ -443,7 +445,7 @@
 		  text-color width background
 		  parent height line) self
     (let ((label-width (label-width self))
-	  (line-width (font-text-width line *font*)))
+	  (line-width (font-text-width line %font)))
       ;; draw the label string 
       (let ((*text-baseline* (+ y (dash 1))))
 	(unless nolabel 
@@ -461,7 +463,7 @@
 		       (+ (dash 1 x) label-width)
 		       *text-baseline*
 		       :color (find-color self :foreground)
-		       :font *font*))))))
+		       :font %font))))))
 		 
 (define-method draw-focus entry ()
   (unless %read-only 
@@ -473,7 +475,7 @@
 		       (dash 1 x)
 		       *text-baseline*
 		       :color *default-prompt-text-color*
-		       :font *font*))
+		       :font %font))
 	(draw-indicators self :active)
 	(update-cursor-clock self)
 	(draw-cursor self 
@@ -521,11 +523,11 @@
 
 (define-method layout entry ()
   (with-fields (height width value line) self
-    (setf height (+ 1 (* 1 *dash*) (font-height *font*)))
+    (setf height (+ 1 (* 1 *dash*) (font-height %font)))
     (setf width (+ 1 (* 2 *dash*)
 		   (label-width self)
 		   (max %minimum-width
-			(font-text-width line *font*))))))
+			(font-text-width line %font))))))
 
 ;;; Dropping words into phrases
 
@@ -588,5 +590,45 @@
   (when (stringp value)
     (setf %value value)
     (setf %line value)))
+
+;;; Command forms
+
+(defun-memo command-name-string (thing)
+    (:key #'first :test 'equal :validator #'identity)
+  (let ((name (etypecase thing
+		(symbol (symbol-name thing))
+		(string thing))))
+    (coerce 
+     (string-capitalize 
+      (substitute #\Space #\- 
+		  (string-trim " " name)))
+     'simple-string)))
+
+(defun arglist-input-forms (argument-forms)
+  (mapcan #'(lambda (f)
+	      (list 
+	       (list 'new '(quote expression) :value (make-keyword (first f)) :read-only t)
+	       (list 'new '(quote expression) :value (second f) :read-only nil)))
+	  argument-forms))
+
+(defun command-inputs (name arglist)
+  `((let ((label (new 'label :read-only t :font "sans-bold-16")))
+     (prog1 label (set-value label ,(command-name-string (symbol-name name)))))
+    (make-sentence (list ,@(arglist-input-forms arglist)))))
+
+;; (command-inputs 'foo '((:a 1) (:b 2)))
+
+(defmacro define-command (name arglist &body body)
+  `(progn
+     (defun ,name (&key ,@arglist) ,@body)
+     (export ',name)
+     (define-block-macro ,name 
+	 (:super phrase
+	  :fields ((orientation :initform :vertical))
+	  :inputs ,(command-inputs name arglist))
+       (prog1 nil
+	 (apply #'funcall #',name
+		(mapcar #'evaluate 
+			(%inputs (second %inputs))))))))
 
 ;;; entry.lisp ends here

@@ -1491,7 +1491,7 @@ table."
 
 ;;; Standard resource names
 
-(defparameter *font* "sans-mono-bold-11")
+(defparameter *font* "sans-bold-11")
 
 (defvar *color* "black")
 

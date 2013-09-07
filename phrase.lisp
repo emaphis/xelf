@@ -236,24 +236,4 @@
 (defun duplicate-phrase (phrase)
   (make-phrase (compile-phrase phrase)))
 
-;;; Command forms
-
-(defun arglist-input-forms (argument-forms)
-  (mapcan #'(lambda (f)
-	      (list 
-	       (list 'new '(quote expression) :value (make-keyword (first f)) :read-only t)
-	       (list 'new '(quote expression) :value (second f) :read-only nil)))
-	  argument-forms))
-
-(defmacro define-command (name arglist &body body)
-  `(progn
-     (defun ,name (&key ,@arglist) ,@body)
-     (export ',name)
-     (define-block-macro ,name 
-	 (:super phrase
-	  :fields ((orientation :initform :horizontal))
-	  :inputs ,(arglist-input-forms arglist))
-       (prog1 nil
-	 (apply #'funcall #',name (mapcar #'evaluate %inputs))))))
-
 ;;; phrase.lisp ends here
