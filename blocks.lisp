@@ -63,7 +63,7 @@
   (category :initform :data)
   (tags :initform nil)
   (garbagep :initform nil)
-  (no-background :initform nil)
+  (no-background :initform t)
   (temporary :initform nil)
   (methods :initform nil)
   (parent :initform nil :documentation "Link to enclosing parent block, or nil if none.")

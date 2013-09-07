@@ -57,7 +57,7 @@
     (setf %width (+ width (dash 5)))))
 			     
 (define-method draw messenger ()
-  (draw-background self)
+;;  (draw-background self)
   (with-fields (x y width height) self
       (let ((y0 (+ y height (- 0 (font-height *font*) (dash 2))))
 	    (x0 (+ x (dash 3))))
@@ -65,7 +65,7 @@
 	  (unless (<= (length (get-messages self)) n)
 	    (draw-string (nth n (get-messages self))
 			 x0 y0
-			 :color "gray70"
+			 :color "gray20"
 			 :font *block-font*)
 	    (decf y0 (font-height *font*)))))))
 
@@ -119,21 +119,24 @@
 (define-method pick shell-prompt ()
   nil)
 
+(define-method evaluate-expression shell-prompt (sexp0)
+  (with-fields (result) self
+    (let ((sexp (first sexp0)))
+      (if (and (not (null sexp))
+	       (not (keywordp sexp))
+	       (symbolp sexp))
+	  (setf result (new sexp))
+	  (setf result (eval sexp))))))
+
 (define-method enter shell-prompt (&optional no-clear)
   (prompt%enter self)
   (with-fields (result) self
-    (replace-contents *shell*
-			(list 
-			 (if (xelfp result) 
-			     result (make-phrase result))))))
-
+    (insert-output (shell)
+		   (if (xelfp result) 
+		       result (make-phrase result)))))
 
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
-
-(define-method evaluate-expression shell-prompt (sexp)
-  (with-fields (result) self
-    (setf result (eval (first sexp)))))
 
 ;;; The shell is a command prompt and message output area.
 
@@ -145,18 +148,25 @@
      :fields 
      ((orientation :initform :vertical)
       (frozen :initform t)
+      (category :initform :system)
       (spacing :initform 4))
      :inputs
      (:modeline (new 'modeline)
-      :contents (new 'phrase (new 'messenger))
+      :output (new 'phrase (new 'messenger))
       :prompt (new 'shell-prompt))))
 
-(define-method replace-contents shell (items)
-  (unfreeze %%contents)
-  (mapc #'destroy (%inputs %%contents))
+(define-method insert-output shell (item)
+  (unfreeze %%output)
+  (accept %%output item)
+  (freeze %%output))
+
+(define-method clear-output shell ()
+  (mapc #'destroy (%inputs %%output)))
+
+(define-method replace-output shell (items)
+  (clear-output self)
   (dolist (item items)
-    (accept %%contents item))
-  (freeze %%contents))
+    (insert-output self item)))
 
 (define-method hit shell (x y)
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
@@ -167,17 +177,42 @@
 
 (define-method alternate-tap shell (x y) nil)
 
-(define-method get-prompt shell () %%prompt)
-
-(defun shell-prompt ()
-  (when *shell* (get-prompt *shell*)))
-
 (define-method focus shell ()
   (let ((prompt (get-prompt self)))
     (set-read-only prompt nil)
     (grab-focus prompt)))
-	;;
-;;	(replace-contents self (list result))))))
+
+(define-method get-prompt shell () %%prompt)
+(define-method get-modeline shell () %%modeline)
+(define-method get-output shell () %%output)
+
+(define-method draw shell ()
+  (with-style :rounded
+    (draw-background self))
+  (mapc #'draw %inputs))
+
+(defun shell () *shell*)
+
+(defun shell-prompt ()
+  (get-prompt (shell)))
+
+(defun shell-modeline ()
+  (get-modeline (shell)))
+
+(defun shell-output ()
+  (get-output (shell)))
+
+(defun shell-insert-output (object)
+  (insert-output (shell) object))
+
+(defun shell-clear-output ()
+  (clear-output (shell)))
+
+;;; Shell commands
+
+(define-command save-as ((first-argument 10) (second-argument "hello"))
+  (message "SAVE AS ~S/~S" first-argument second-argument))
+  
 
 
 

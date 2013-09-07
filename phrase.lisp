@@ -127,7 +127,7 @@
 	(move-to element (ldash x) y0)
 	(layout element)
 	(incf height (field-value :height element))
-;	(incf height spacing)
+	(incf height spacing)
 	(incf y0 (field-value :height element))
 	(setf width (max width (field-value :width element))))
       (incf width (dash 2))))))
@@ -227,7 +227,7 @@
     ((eq '&body sexp)
      (make-sentence nil))
     ;; base case
-    (t (new 'expression :value sexp :read-only t))))
+    (t (new 'expression :value sexp :read-only nil))))
 
 (defun compile-phrase (phrase)
   ;; also compiles entries!
@@ -235,5 +235,24 @@
 
 (defun duplicate-phrase (phrase)
   (make-phrase (compile-phrase phrase)))
+
+;;; Command forms
+
+(defun arglist-input-forms (argument-forms)
+  (mapcan #'(lambda (f)
+	      (list 
+	       (list 'new '(quote expression) :value (make-keyword (first f)) :read-only t)
+	       (list 'new '(quote expression) :value (second f) :read-only nil)))
+	  argument-forms))
+
+(defmacro define-command (name arglist &body body)
+  `(progn
+     (defun ,name (&key ,@arglist) ,@body)
+     (export ',name)
+     (define-block-macro ,name 
+	 (:super phrase
+	  :fields ((orientation :initform :horizontal))
+	  :inputs ,(arglist-input-forms arglist))
+       (apply #'funcall #',name (mapcar #'evaluate %inputs)))))
 
 ;;; phrase.lisp ends here
