@@ -636,6 +636,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
     (:tab nil :tab)
     (:tab (:control) :backtab)
     (:return nil :enter)
+    (:return (:control) :execute)
     ;; (:return (:control) :evaluate-here)
     ;; (:delete (:alt) :delete-word)
     ;; (:d (:alt) :delete-word)
@@ -1550,7 +1551,8 @@ The following block fields will control sprite drawing:
   (quadtree-delete-maybe self)
   (setf %height height)
   (setf %width width)
-  (quadtree-insert-maybe self))
+  (quadtree-insert-maybe self)
+  nil)
 ;;  (invalidate-layout self))
 
 (define-method layout block () 

@@ -135,9 +135,10 @@
   (prompt%enter self)
   (with-fields (result) self
     (when result
-      (replace-output (shell)
-		      (list (if (xelfp result) 
-				result (make-phrase result)))))))
+      (replace-output (shell) (list (make-phrase result))))))
+
+(define-method execute shell-prompt ()
+  (evaluate-output (shell)))
 
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
@@ -178,12 +179,18 @@
   (freeze %%output))
 
 (define-method destroy-output shell ()
-  (mapc #'destroy (%inputs %%output)))
+  (mapc #'destroy (%inputs %%output))
+  (setf (%inputs %%output) nil))
 
 (define-method replace-output shell (items)
   (destroy-output self)
   (dolist (item items)
     (insert-output self item)))
+
+(define-method evaluate-output shell ()
+  (replace-output self
+		  (list
+		   (make-phrase (mapc #'evaluate (%inputs %%output))))))
 
 (define-method hit shell (x y)
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
@@ -224,6 +231,9 @@
 
 (defun shell-destroy-output ()
   (destroy-output (shell)))
+
+(defun shell-evaluate-output ()
+  (evaluate-output (shell)))
 
 ;;; Shell commands
 

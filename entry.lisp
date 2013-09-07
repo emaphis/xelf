@@ -637,11 +637,15 @@
 	 (:super phrase
 	  :fields ((orientation :initform :vertical))
 	  :inputs ,(command-inputs name arglist))
-       (prog1 nil
-	 (apply #'funcall #',name
-		(mapcar #'evaluate 
-			(mapcan #'identity 
-				(mapcar #'%inputs 
-					(%inputs (second %inputs))))))))))
+       ;; when evaluating this dialog,
+       ;; call the command function
+       (apply #'funcall #',name
+	      ;; with the evaluated results of
+	      (mapcar #'evaluate 
+		      ;; all the argument names/values
+		      (mapcan #'identity 
+			      (mapcar #'%inputs 
+				      ;; from the dialog box
+				      (%inputs (second %inputs)))))))))
 
 ;;; entry.lisp ends here
