@@ -825,7 +825,7 @@ slowdown. See also quadtree.lisp")
 ;;; The Program is an optional layer of objects on top of the buffer
 
 (define-method add-shell-maybe buffer (&optional force)
-  (when (or force (not (xelfp *shell*)))
+  (when (or force (null *shell*))
     (setf *shell* 
 	  (new 'shell))))
 
@@ -890,8 +890,8 @@ slowdown. See also quadtree.lisp")
 	(draw drag))
       (when (xelfp *shell*)
 	(draw *shell*))
-      (when (xelfp %cursor)
-	(draw-cursor %cursor))
+      ;; (when (xelfp %cursor)
+      ;; 	(draw-cursor %cursor))
       ;; draw focus
       (when focused-block
 	(when (xelfp focused-block))
@@ -969,7 +969,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method update buffer ()
   (with-field-values (objects drag cursor) self
-    ;; rebuild shell if needed
+    ;; clean up after destroyed shell if needed
     (when (and *shell* (not (xelfp *shell*)))
       (setf *shell-open-p* nil)
       (setf %inputs (delete *shell* %inputs :test 'equal)))
@@ -1061,6 +1061,8 @@ starting at the end of `%INPUTS' and going backward, because the
 blocks are drawn in list order (i.e. the topmost blocks for
 mousing-over are at the end of the list.) The return value is the
 block found, or nil if none is found."
+  ;; remove any dead objects
+  (setf %inputs (remove-if-not #'xelfp %inputs))
   (with-buffer self 
     (with-quadtree %quadtree
       (labels ((try (b)
@@ -1070,7 +1072,7 @@ block found, or nil if none is found."
 	(let* ((object-p nil)
 	       (result 
 		 (or 
-		  (when *shell-open-p* 
+		  (when (and *shell-open-p* (xelfp *shell*))
 		    (try *shell*))
 		  (let ((parent 
 			  (find-if #'try 
@@ -1259,17 +1261,17 @@ block found, or nil if none is found."
 			(move-to drag drop-x drop-y)
 			(if (null hover)
 			    ;; ok, what layer does it go in?
-			    (if (%quadtree-node drag)
+			    (if (not (contains self drag))
 				;; gameworld
 				(add-object self drag drop-x drop-y)
 				;; shell
-				(add-object self drag drop-x drop-y))
+				(add-block self drag drop-x drop-y))
 			    ;; dropping on another block
 			    (if (accept hover drag)
 				(invalidate-layout hover)
 				;; hovered block did not accept drag. 
 				;; drop it back in the program layer.
-				(add-object self drag drop-x drop-y))))))
+				(add-block self drag drop-x drop-y))))))
 	      ;; select the dropped block
 	      (progn 
 					;		(select self drag)

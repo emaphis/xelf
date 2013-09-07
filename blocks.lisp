@@ -53,6 +53,7 @@
   (cursor-clock :initform 0)
   (hearing-distance :initform nil)
   ;; general information
+  (shell-only :initform nil)
   (inputs :initform nil)
   (focused-p :initform nil)
   (buffer-name :initform nil)

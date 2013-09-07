@@ -37,7 +37,7 @@
     :move (2/3 1)
     :drop (1/3 1)
     :rotate (0 1)
-    :pick-up (1/3 1)
+    :pick-up (1/4 1)
     :resize (1 1)
     :define (0 0)
     :close (1 0)
@@ -135,6 +135,7 @@
 
 (define-method tap pick-up (x0 y0)
   (unless (contains (current-buffer) %target)
+    (remove-thing-maybe (current-buffer) %target)
     (add-block (current-buffer) %target)))
 
 (define-method update pick-up ()
@@ -234,7 +235,7 @@
 ;;; The halo, which manages all the handles
 
 (defparameter *halo-handles* 
-  '(evaluate drop move rotate resize cut copy destroy))
+  '(evaluate drop move rotate resize pick-up cut copy destroy))
 
 (define-block halo target)
 

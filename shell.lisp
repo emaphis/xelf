@@ -156,6 +156,11 @@
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
     self))
 
+(define-method tap shell (x y)
+  (focus self))
+
+(define-method alternate-tap shell (x y) nil)
+
 (define-method get-prompt shell () %%prompt)
 
 (defun shell-prompt ()
