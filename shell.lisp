@@ -20,191 +20,6 @@
 
 (in-package :xelf)
 
-(defparameter *shell-menu-entries*
-  '((:label "Project"
-     :inputs
-     ((:label "Create a new project" :action :create-project)
-      (:label "Save current project" :action :save-project)
-      (:label "Load a project" :action :load-project)
-      (:label "Settings" :action :settings)
-      (:label "Quit Xelf" :action :quit-xelf)))
-    (:label "Buffer"
-     :inputs
-     ((:label "Cut" :action :cut)
-      (:label "Copy" :action :copy)
-      (:label "Paste" :action :paste)
-      (:label "Paste as new buffer" :action :paste-as-new-buffer)
-      (:label "Select all" :action :select-all)
-      (:label "Clear selection" :action :clear-selection)))
-    ;; (:label "View"
-
-    (:label "Block"
-     :inputs
-     ((:label "Inspect" :action :inspect)
-      (:label "Copy" :action :do-copy)
-      (:label "Destroy" :action :destroy)))
-    (:label "Help"
-     :inputs
-     ((:label "Copyright notice" :action :show-copyright-notice)
-      (:label "General help" :action :general-help)
-      (:label "Examples" :action :show-examples)
-      (:label "Language Reference" :action :language-reference)))))
-
-;;; A basic action button
-
-(define-block (button :super phrase)
-  (category :initform :button)
-  (target :initform nil)
-  (method :initform nil)
-  (arguments :initform nil)
-  (label :initform nil))
-
-(define-method initialize button 
-    (&key target method arguments label)
-  (when target (setf %target target))
-  (when method (setf %method method))
-  (when label (setf %label label))
-  (when arguments (setf %arguments arguments)))
-
-(define-method layout button ()
-  (with-fields (height width) self
-    (setf width (+ (* 13 (dash))
-		   (font-text-width %label
-				    *block-bold*))
-	  height (+ (font-height *block-bold*) (* 4 (dash))))))
-
-(define-method draw button ()
-  (with-fields (x y height width label) self
-    (with-style :rounded (draw-patch self x y (+ x width) (+ y height)))
-    (draw-image "colorbang" 
-		    (+ x (dash 1))
-		    (+ y (dash 1)))
-    (draw-string %label (+ x (dash 9)) (+ y (dash 2))
-		 :color "white"
-		 :font *block-bold*)))
-
-(define-method tap button (x y)
-  (apply #'send %method %target %arguments))
-
-;;; Headline 
-
-(define-block headline title)
-
-(defparameter *xelf-title-string* "Xelf 0.92a")
-
-(define-method initialize headline (&optional (title *project*))
-  (initialize%super self)
-  (setf %title title))
-
-(define-method layout headline ()
-  (resize self 
-	  (+ (dash 2) *logo-height*)
-	  *logo-height*))
-
-(define-method draw headline ()
-  (with-fields (x y) self
-    (draw-image "xelf" (+ x (dash 0.5)) (- y (dash 0.5)) :height *logo-height* :width *logo-height*)
-    (draw-string %title
-		 (+ x *logo-height* (dash 2))
-		 (+ y (dash 1))
-		 :color "white"
-		 :font *block-bold*)))
-
-;;; Generic window titlebar utility
-
-(define-block (window :super phrase)
-  (centered :initform nil)
-  (tags :initform '(:window))
-  (category :initform :system))
-
-(defun windowp (thing)
-  (and (xelfp thing)
-       (has-tag thing :window)))
-
-(define-method initialize window (&key child (title "*untitled-window*"))
-  (assert child)
-  (initialize%super self)
-  (setf %inputs (list (new 'headline title) child))
-  (update-parent-links self)
-  (mapc #'pin %inputs))
-
-(define-method layout window ()
-  (layout-vertically self)
-  (align-to-pixels self))
-
-(define-method can-pick window ()
-  t)
-
-(define-method pick window ()
-  self)
-
-(define-method center window ()
-  (layout self)
-  (center%super self))
-
-(define-method accept window (thing))
-
-(define-method draw-hover window ())
-
-(define-method after-unplug-hook window (thing)
-  (destroy self))
-
-;;; Shell prompt
-
-(define-block (shell-prompt :super entry)
-  (background :initform nil)
-  output)
-
-(defun debug-on-error ()
-  (setf *debug-on-error* t))
-
-(defun print-on-error ()
-  (setf *debug-on-error* nil))
-
-(define-method set-output shell-prompt (output)
-  (setf %output output))
-
-(define-method can-pick shell-prompt () nil)
-
-(define-method pick shell-prompt ()
-  %parent)
-
-(define-method enter shell-prompt (&optional no-clear)
-  (prompt%enter self))
-
-(define-method do-sexp shell-prompt (sexp)
-  (with-fields (output) self
-    (assert output)
-    (let ((container output)
-	  (result nil))
-      (assert (xelfp container))
-      ;; output messages too
-      (let ((*message-function* 
-	      #'(lambda (text)
-		  (format t "~A" text)
-		  (accept container (new 'label :line text)))))
-	;; execute lisp expressions
-	(setf result (eval (first sexp)))
-	;; ;; we didn't crash, at least. output the reusable sexp
-	;; (accept container (new 'expression :line %last-line))
-	;; do something with result
-	(let ((new-block 
-		(if (xelfp result)
-		    result
-		    (new 'expression :value result))))
-      	  ;; spit out result block, if any
-      	  (when new-block 
-      	    (accept container new-block)))))))
-
-(define-method lose-focus shell-prompt ()
-  (cancel-editing self))
-
-(define-method do-after-evaluate shell-prompt ()
-  ;; print any error output
-  (when (and %output (stringp %error-output)
-	     (plusp (length %error-output)))
-    (accept %output (new 'text %error-output))))
-
 ;;; Message output widget
 
 (define-block messenger :category :terminal :messages nil)
@@ -254,91 +69,6 @@
 			 :font *block-font*)
 	    (decf y0 (font-height *font*)))))))
 
-
-;; ;;; The Shell is a command prompt and message output area.
-
-(define-block-macro shell
-    (:super phrase
-     :fields 
-     ((orientation :initform :vertical)
-      (no-background :initform t)
-      (spacing :initform 4))))
-
-(defparameter *minimum-shell-width* 200)
-
-(define-method initialize shell ()
-  (with-fields (image inputs) self
-    (let ((prompt (new 'shell-prompt))
-	  (modeline (new 'modeline)))
-      (initialize%super self)
-      (set-output prompt self)
-      (setf inputs (list modeline prompt))
-      (set-parent prompt self)
-      (set-parent modeline self)
-      (pin prompt)
-      (pin modeline))))
-
-(define-method layout shell ()
-  (with-fields (height width parent inputs) self
-    (setf height 0)
-    (setf width 0)
-    ;; update all child dimensions
-    (dolist (element inputs)
-      (layout element)
-      (incf height (field-value :height element))
-      (callf max width (dash 2 (field-value :width element))))
-    ;; now compute proper positions and re-layout
-    (let* ((x (+ (dash 1) (%window-x (current-buffer))))
-	   (y0 (+ (%window-y (current-buffer))
-		  *gl-screen-height*))
-	   (y (- y0 height (dash 3))))
-      (dolist (element inputs)
-	(decf y0 (field-value :height element))
-	(move-to element x y0)
-	(layout element))
-      (setf %y y)
-      (setf %x x)
-      ;;  a little extra room at the top and sides
-      (incf height (dash 3)))))
-;; ;; move to the right spot to keep the bottom on the bottom.
-      ;; (setf y (- y0 (dash 1))))))
-
-;; (define-method update shell ()
-;;   (update (first %inputs))
-;;   (update (second %inputs)))
-
-(define-method get-prompt shell ()
-  (second %inputs))
-
-(defun shell-prompt ()
-  (when *shell* (get-prompt *shell*)))
-
-(define-method enter shell ()
-  (enter (get-prompt self)))
- 
-(define-method evaluate shell ()
-  (evaluate (get-prompt self)))
-
-(define-method focus shell ()
-  (let ((prompt (get-prompt self)))
-    (set-read-only prompt nil)
-    (grab-focus prompt)))
-
-(defparameter *shell-background-color* "gray20")
-
-(define-method draw shell ()
-  (with-fields (inputs x y height width) self
-    (draw-box (window-x) y *gl-screen-width* height :color *shell-background-color*)
-    (mapc #'draw inputs)))
-
-(define-method hit shell (x y)
-  (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
-    self))
-
-;; (define-method accept shell (thing)
-;;   (destroy (third %inputs))
-;;   (setf (third
-
 ;;; Modeline
 
 (defun-memo modeline-position-string (x y)
@@ -355,16 +85,16 @@
      ((orientation :initform :horizontal)
       (no-background :initform t)
       (spacing :initform 4))
-     :inputs (:project-id (new 'label :read-only t)
-	      :buffer-id (new 'label :read-only t)
+     :inputs (:buffer-id (new 'label :read-only t)
 	      :position (new 'label :read-only t)
 	      :mode (new 'label :read-only t)
-	      :objects (new 'label :read-only t))))
+	      :objects (new 'label :read-only t)
+	      :project-id (new 'label :read-only t))))
 
 (define-method update modeline ()
   (mapc #'pin %inputs)
   (set-value %%project-id *project*)
-  (set-value %%buffer-id (or (%buffer-name (current-buffer)) "nil"))
+  (set-value %%buffer-id (or (%buffer-name (current-buffer)) "*untitled-buffer*"))
   (set-value %%objects (modeline-database-string (hash-table-count (%objects (current-buffer)))
 						 (hash-table-count *database*)))
   (set-value %%position
@@ -377,5 +107,76 @@
 		     "(paused)"
 		     "(playing)")
 		 "(empty)")))
+
+;;; Shell prompt
+
+(define-block (shell-prompt :super entry)
+  (result :initform nil)
+  (background :initform nil))
+
+(define-method can-pick shell-prompt () nil)
+
+(define-method pick shell-prompt ()
+  nil)
+
+(define-method enter shell-prompt (&optional no-clear)
+  (prompt%enter self))
+
+(define-method lose-focus shell-prompt ()
+  (cancel-editing self))
+
+(define-method evaluate-expression shell-prompt (sexp)
+  (with-fields (result) self
+    (setf result (eval (first sexp)))))
+
+;;; The shell is a command prompt and message output area.
+
+(defparameter *minimum-shell-width* 400)
+(defparameter *shell-background-color* "gray20")
+
+(define-block-macro shell
+    (:super phrase
+     :fields 
+     ((orientation :initform :vertical)
+      (frozen :initform t)
+      (spacing :initform 4))
+     :inputs
+     (:modeline (new 'modeline)
+      :contents (new 'phrase (new 'messenger))
+      :prompt (new 'shell-prompt))))
+
+(define-method replace-contents shell (items)
+  (unfreeze %%contents)
+  (mapc #'destroy (%inputs %%contents))
+  (dolist (item items)
+    (accept %%contents item))
+  (freeze %%contents))
+
+(define-method hit shell (x y)
+  (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
+    self))
+
+(define-method get-prompt shell () %%prompt)
+
+(defun shell-prompt ()
+  (when *shell* (get-prompt *shell*)))
+
+(define-method focus shell ()
+  (let ((prompt (get-prompt self)))
+    (set-read-only prompt nil)
+    (grab-focus prompt)))
+
+(define-method enter shell ()
+  (let ((prompt %%prompt))
+    (with-fields (result) prompt
+      (enter prompt)
+      (if (xelfp result) 
+	  (accept %%contents result)
+	  (accept %%contents (make-phrase result))))))
+	;;
+;;	(replace-contents self (list result))))))
+
+
+
 
 ;;; shell.lisp ends here

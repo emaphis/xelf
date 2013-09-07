@@ -116,7 +116,7 @@
     (say self (if comment ";; ~A"
 		  " ~A") line)))
 
-(define-method do-sexp prompt (sexp))
+(define-method evaluate-expression prompt (sexp))
 
 (define-method read-expression prompt (input-string)
   (handler-case 
@@ -133,28 +133,11 @@
     (let* ((line %line))
       (setf %last-line line)
       (unless no-clear (clear-line self))
-      
-      (setf %error-output
-	    (if *debug-on-error*
-		(do-sexp self (read-expression self line))
-		(handler-case
-		    (handler-bind (((not serious-condition)
-				     (lambda (c) 
-				       (print-it c)
-				       ;; If there's a muffle-warning
-				       ;; restart associated, use it to
-				       ;; avoid double-printing.
-				       (let ((r (find-restart 'muffle-warning c)))
-					 (when r (invoke-restart r))))))
-		      (do-sexp self (read-expression self line)))
-		  (serious-condition (c)
-		    (print-it c)))))
+      (with-output-to-string (*standard-output*)
+	(let ((expression (read-expression self line)))
+	  (evaluate-expression self expression)))
       (queue line %history)
       (do-after-evaluate self))))
-      ;; (with-output-to-string (*standard-output*)
-      ;; 	(when sexp (do-sexp self sexp)))
-
-
 
 (define-method newline prompt ()
   (enter self))
@@ -506,7 +489,7 @@
 	      :color "white"
 	      :alpha (min 0.45 (+ 0.2 (sin (/ *updates* 2)))))))
 
-(define-method do-sexp entry (sexp)
+(define-method evaluate-expression entry (sexp)
   (with-fields (value type-specifier parent) self
     (assert (and (listp sexp) (= 1 (length sexp))))
     (let ((datum (first sexp)))
@@ -598,7 +581,7 @@
   ;; pass-through; don't read string at all.
   input-string)
  
-(define-method do-sexp label (sexp)
+(define-method evaluate-expression label (sexp)
   (assert (stringp sexp))
   (setf %value sexp)
   (when %parent (child-updated %parent self)))

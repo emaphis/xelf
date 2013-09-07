@@ -1,4 +1,4 @@
-;;; phrase.lisp --- interactive blocks for basic lisp data types
+;;; phrase.lisp --- horizontal and vertical lists of widgets
 
 ;; Copyright (C) 2013  David O'Toole
 
@@ -207,8 +207,7 @@
 
 (defun phrase-root (phrase)
   (let ((p phrase))
-    (assert (phrasep p))
-    (loop while (phrasep (%parent p))
+    (loop while (%parent p)
 	  do (setf p (%parent p)))
     p))
 

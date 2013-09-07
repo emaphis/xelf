@@ -825,7 +825,7 @@ slowdown. See also quadtree.lisp")
 ;;; The Program is an optional layer of objects on top of the buffer
 
 (define-method add-shell-maybe buffer (&optional force)
-  (when (or force (null *shell*))
+  (when (or force (not (xelfp *shell*)))
     (setf *shell* 
 	  (new 'shell))))
 
@@ -864,7 +864,7 @@ slowdown. See also quadtree.lisp")
 
 (define-method update-program-objects buffer ()
   (mapc #'update %inputs)
-  (update *shell*))
+  (when (xelfp *shell*) (update *shell*)))
 
 (define-method draw-program-objects buffer ()
   (with-buffer self
@@ -888,7 +888,7 @@ slowdown. See also quadtree.lisp")
 	(when hover 
 	  (draw-hover hover))
 	(draw drag))
-      (when *shell*
+      (when (xelfp *shell*)
 	(draw *shell*))
       (when (xelfp %cursor)
 	(draw-cursor %cursor))
@@ -969,6 +969,10 @@ slowdown. See also quadtree.lisp")
 
 (define-method update buffer ()
   (with-field-values (objects drag cursor) self
+    ;; rebuild shell if needed
+    (when (and *shell* (not (xelfp *shell*)))
+      (setf *shell-open-p* nil)
+      (setf %inputs (delete *shell* %inputs :test 'equal)))
     ;; build quadtree if needed
     (when (null %quadtree)
       (install-quadtree self))
@@ -1022,7 +1026,7 @@ slowdown. See also quadtree.lisp")
 	  ;; %width *gl-screen-width* 
 	  ;; %height *gl-screen-height*)
     (mapc #'layout %inputs)
-    (when *shell*
+    (when (xelfp *shell*)
       (layout *shell*))))
   
 (define-method handle-event buffer (event)
