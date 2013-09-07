@@ -129,9 +129,10 @@
 (define-method enter shell-prompt (&optional no-clear)
   (prompt%enter self)
   (with-fields (result) self
-    (replace-output (shell)
-		    (list (if (xelfp result) 
-			      result (make-phrase result))))))
+    (when result
+      (replace-output (shell)
+		      (list (if (xelfp result) 
+				result (make-phrase result)))))))
 
 (define-method lose-focus shell-prompt ()
   (cancel-editing self))
