@@ -34,40 +34,40 @@
   (:use :common-lisp) 
   (:export null-block *frequency* *output-chunksize* *output-channels*
 cfloat halt-sample *dt* *copyright-notice* *author*
-*message-hook-functions* exit-xelf add-to-list shell-open-p z-sort
-modify-joystick-profile defproject start stop selection cut copy paste
-paste-here clear-clipboard copy-to-clipboard paste-at-pointer
-at-next-update *next-update-hook* eval-in-emacs autoload
-*already-serialized* browse back selected-object bounding-box-contains
-*preload-resources* preload-resources *always-show-sidebar*
-*preload-images* *preload-samples* prototype-variable-name
-*update-function* kill-buffer *target* toggle-play *blocks* shut-down
-later later-at toggle-glass glass-show glass-hide glass-show-at
-later-when start-up seconds->frames keyboard-held-p keyboard-pressed-p
-holding-control transform-window *scale-output-to-window*
-keyboard-released-p *edit* with-font *font* find-heading
-keyboard-time-in-current-state *current-directory* current-directory
-pretty-string ugly-symbol *pointer-x* *pointer-y* is-joystick-event
-*self* is-raw-joystick-event keyboard-time-in-previous-state *updates*
-keyboard-down-p *buffers* keyboard-keys-down keyboard-modifier-down-p
-find-buffer find-buffer *socket-size* keyboard-modifiers
-draw-filled-circle draw-aa-circle get-keys make-block add-buffer
-find-buffer add-block remove-block with-quadtree *initialization-hook*
-hit-blocks quadtree-delete add-resources quadtree-insert
-build-quadtree quadtree-collide quadtree-show *quadtree*
-*quadtree-depth* split-string-on-lines message with-session
-start-session *prompt-sweden-keybindings* *prompt-qwerty-keybindings*
-*screen-width* transform-method-body roll-under initialize-colors
-*style* load-project-image create-project-image *standard-categories*
-*left-turn* bind-event *right-turn* left-turn right-turn roll
-bind-event-to-method *colors* enable-key-repeat disable-key-repeat
-get-color define-method *font* field-value set-field-value
-object-fields dispatch-event *user-init-file-name* distance
-icon-resource icon-image *directions* *opposites* *pending-resources*
-with-project project-orthographically project-with-perspective
-open-viewport find-resource-property compose-blank-fields font-width
-font-height find-object *windows* edit create xelf
-transform-field-reference define-block *screen-height*
+without-style-warnings *font-texture-scale* *message-hook-functions*
+exit-xelf add-to-list shell-open-p z-sort modify-joystick-profile
+defproject start stop selection cut copy paste paste-here
+clear-clipboard copy-to-clipboard paste-at-pointer at-next-update
+*next-update-hook* eval-in-emacs autoload *already-serialized* browse
+back selected-object bounding-box-contains *preload-resources*
+preload-resources *always-show-sidebar* *preload-images*
+*preload-samples* prototype-variable-name *update-function*
+kill-buffer *target* toggle-play *blocks* shut-down later later-at
+toggle-glass glass-show glass-hide glass-show-at later-when start-up
+seconds->frames keyboard-held-p keyboard-pressed-p holding-control
+transform-window *scale-output-to-window* keyboard-released-p *edit*
+with-font *font* find-heading keyboard-time-in-current-state
+*current-directory* current-directory pretty-string ugly-symbol
+*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
+keyboard-time-in-previous-state *updates* keyboard-down-p *buffers*
+keyboard-keys-down keyboard-modifier-down-p find-buffer find-buffer
+*socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
+get-keys make-block add-buffer find-buffer add-block remove-block
+with-quadtree *initialization-hook* hit-blocks quadtree-delete
+add-resources quadtree-insert build-quadtree quadtree-collide
+quadtree-show *quadtree* *quadtree-depth* split-string-on-lines
+message with-session start-session *prompt-sweden-keybindings*
+*prompt-qwerty-keybindings* *screen-width* transform-method-body
+roll-under initialize-colors *style* load-project-image
+create-project-image *standard-categories* *left-turn* bind-event
+*right-turn* left-turn right-turn roll bind-event-to-method *colors*
+enable-key-repeat disable-key-repeat get-color define-method *font*
+field-value set-field-value object-fields dispatch-event
+*user-init-file-name* distance icon-resource icon-image *directions*
+*opposites* *pending-resources* with-project project-orthographically
+project-with-perspective open-viewport find-resource-property
+compose-blank-fields font-width font-height find-object *windows* edit
+create xelf transform-field-reference define-block *screen-height*
 formatted-line-width find-buffer *clipboard* formatted-line-height
 formatted-string-height formatted-string-width get-color create-image
 draw-image xelf edit define-prototype has-field *target* with-target
@@ -77,10 +77,10 @@ index-all-samples *default-joystick-profile* joystick-profile visit
 draw-textured-rectangle-* find-project-path index-project image-height
 image-width load-image-resource load-lisp-resource *executable*
 *combine-buffers-destructively* *screen-height* cursor *screen-width*
-xelfp *nominal-screen-width* *nominal-screen-height*
-*gl-screen-width* *gl-screen-height* *message-function* dash
-holding-shift get-button-index message-to-standard-output
-*cached-quadtree* rebuild-quadtree rebuild-node reset-message-function
+xelfp *nominal-screen-width* *nominal-screen-height* *gl-screen-width*
+*gl-screen-height* *message-function* dash holding-shift
+get-button-index message-to-standard-output *cached-quadtree*
+rebuild-quadtree rebuild-node reset-message-function
 *make-prototype-id-package* lturn rturn ticks-per-beat radian-angle
 draw-textured-rectangle default-project-directories
 *resource-handlers* load-resource find-resource find-resource-object
@@ -182,5 +182,6 @@ draw-indicator load-variables *block-text-colors* defblock capture
 paste-from make-input-accessor-macrolet-clause heading-direction
 make-input-accessor-defun-forms input-reference-p input-block
 *default-quadtree-depth* input-value *block-bold* *bold* *italic*
-*block-italic* colliding-with-bounding-box define-block-macro heading-degrees))
+*block-italic* colliding-with-bounding-box define-block-macro
+heading-degrees))
 

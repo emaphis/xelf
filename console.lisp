@@ -1789,7 +1789,7 @@ control the size of the individual frames or subimages."
   (let* ((size (getf (resource-properties resource) :size))
 	 (definition (make-instance 'sdl:ttf-font-definition
 	 			    :filename (native-namestring (resource-file resource))
-	 			    :size size)))
+	 			    :size (* *font-texture-scale* size))))
     (sdl:initialise-font definition)))
 
 (defun load-music-resource (resource)
@@ -2360,7 +2360,9 @@ of the music."
 ;; points in the font size, for example :size 12 would be a 12-point
 ;; version of the font.
 
-(defun-memo font-height (font)
+(defparameter *font-texture-scale* 1)
+
+(defun-memo font-height-* (font)
     ;; don't cache null results, because these can happen if
     ;; font-height is called before SDL initialization
     (:key #'first :test 'equal :validator #'identity)
@@ -2369,23 +2371,39 @@ of the music."
       (:font (find-resource-property font :height))
       (:ttf (sdl:get-font-height :font (resource-object resource))))))
 
+(defun font-height (font)
+  (* (/ 1 *font-texture-scale*)
+     (font-height-* font)))
+  
 (defun font-width (font)
-  (let ((resource (find-resource font)))
-    (ecase (resource-type resource)
-      (:font (find-resource-property font :width))
-      (:ttf (error "Cannot get width of a TTF font.")))))
+  (* (/ 1 *font-texture-scale*)
+     (let ((resource (find-resource font)))
+       (ecase (resource-type resource)
+	 (:font (find-resource-property font :width))
+	 (:ttf (error "Cannot get width of a TTF font."))))))
 
-(defun-memo font-text-width (string &optional (font *font*))
+(defun-memo font-text-width-* (string &optional (font *font*))
     (:key #'identity :test 'equal :validator #'identity)
   (sdl:get-font-size string :size :w :font (find-resource-object font)))
 
-(defun font-text-extents (string font)
+(defun font-text-width (string &optional (font *font*))
+  (* (/ 1 *font-texture-scale*)
+     (font-text-width-* string font)))
+
+(defun font-text-extents-* (string font)
   (let ((resource (find-resource font)))  
     (ecase (resource-type resource)
-      (:font (* (length string)
-		(font-width font)))
-      (:ttf (values (font-text-width string font)
-		    (font-height font))))))
+      (:font (values (* (length string)
+			(font-width font))
+		     (font-height-* font)))
+      (:ttf (values (font-text-width-* string font)
+		    (font-height-* font))))))
+
+(defun font-text-extents (string font)
+  (multiple-value-bind (width height)
+      (font-text-extents-* string font)
+    (values (* width (/ 1 *font-texture-scale*))
+	    (* height (/ 1 *font-texture-scale*)))))
 
 (defparameter *use-antialiased-text* t)
 
@@ -2393,7 +2411,7 @@ of the music."
   (assert (and (not (null string))
 	       (plusp (length string))))
   (multiple-value-bind (width height)
-      (font-text-extents string font)
+      (font-text-extents-* string font)
     (let ((surface (sdl:create-surface width height :bpp 8))
 	  (texture (first (gl:gen-textures 1)))
 	  (renderer (if *use-antialiased-text*
@@ -2413,6 +2431,14 @@ of the music."
 (defun-memo find-text-image (font string) 
   (:key #'identity :test 'equal)
   (make-text-image font string))
+
+(defun draw-string (string x y &key (color *color*)
+				    (font *font*)
+				    (z 0))
+  (let ((texture (find-text-image font string)))
+    (multiple-value-bind (width height) 
+	(font-text-extents string font)
+      (draw-textured-rectangle x y z width height texture :vertex-color color))))
   
 (defun clear-text-image-cache (&key (delete-textures t))
   (let ((table (get-memo-table 'find-text-image)))
@@ -2422,7 +2448,9 @@ of the music."
 	      do (gl:delete-textures (list texture)))
       (clrhash table)))))
 
-(defun-memo gl-color-values (color-name)
+;; (clear-text-image-cache)
+
+(defun-memo gl-color-values-from-string (color-name)
     (:key #'first :test 'equal)
   (let ((color (find-resource color-name)))
     (assert (eq :color (resource-type color)))
@@ -2431,18 +2459,12 @@ of the music."
 	    (resource-data color))))
 
 (defun set-vertex-color (color &optional (alpha 1))
-  (assert (stringp color))
-  (destructuring-bind (red green blue) 
-      (gl-color-values color)
-    (gl:color red green blue alpha)))
-
-(defun draw-string (string x y &key (color *color*)
-				    (font *font*)
-				    (z 0))
-  (let ((texture (find-text-image font string)))
-    (multiple-value-bind (width height) 
-	(font-text-extents string font)
-      (draw-textured-rectangle x y z width height texture :vertex-color color))))
+  (apply #'gl:color
+	 (if (stringp color)
+	     (gl-color-values-from-string color)
+	     (mapcar #'(lambda (integer)
+			 (/ integer 255.0))
+		     color))))
 
 ;;; Drawing shapes and other primitives
 
@@ -2723,5 +2745,12 @@ of the music."
    `(glass-show :x ,x :y ,y)))
 
 (defun exit-xelf () (shut-down))
+
+(defmacro without-style-warnings (&body body)
+  `(locally
+       (declare #+sbcl(sb-ext:muffle-conditions sb-kernel:redefinition-warning))
+     (handler-bind (#+sbcl(sb-kernel:redefinition-warning #'muffle-warning))
+       ,@body)))
+
 
 ;;; console.lisp ends here
