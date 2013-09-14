@@ -44,5 +44,9 @@
   (paste (current-buffer))
   (trim (current-buffer)))
 
+;; (define-command save-buffer
+
+;; (define-command duplicate-buffer 
+
 
 ;;; commands.lisp ends here

@@ -214,6 +214,12 @@
   (loop for object being the hash-values in %objects 
 	when (xelfp object) collect object))
 
+(defun z-sort (objects)
+  (sort objects #'< :key #'%z))
+
+(define-method maximum-z-value buffer ()
+  (apply #'max (mapcar #'%z (get-objects self))))
+
 (define-method has-object buffer (thing)
   (gethash (find-uuid thing) %objects))
 
@@ -599,6 +605,10 @@ slowdown. See also quadtree.lisp")
     (when quadtree
       (install-quadtree self))))
 
+(define-method resize-to-background-image buffer ()
+  (when %background-image
+    (resize self (image-width %background-image) (image-height %background-image))))
+
 (define-method reset buffer ())
 
 (define-method trim buffer ()
@@ -846,6 +856,8 @@ slowdown. See also quadtree.lisp")
     (setf *shell-open-p* t)
     (enable-key-repeat)))
   
+(defun shell-open-p () *shell-open-p*)
+
 (define-method command-prompt buffer () 
   (enter-shell self)
   (focus-on self (shell-prompt) :clear-selection nil))
@@ -916,6 +928,14 @@ slowdown. See also quadtree.lisp")
 
 (define-method after-draw-object buffer (object))
 
+(define-method draw-object-layer buffer ()
+  (multiple-value-bind (top left right bottom) (window-bounding-box self)
+    (loop for object being the hash-keys of %objects do
+      ;; only draw onscreen objects
+      (when (colliding-with-bounding-box object top left right bottom)
+	(draw object)
+	(after-draw-object self object)))))
+
 (define-method draw buffer ()
   (with-buffer self
     (with-field-values (objects width focused-block height
@@ -932,12 +952,7 @@ slowdown. See also quadtree.lisp")
 	    (draw-box 0 0 width height
 		      :color background-color)))
       ;; now draw the object layer
-      (multiple-value-bind (top left right bottom) (window-bounding-box self)
-	(loop for object being the hash-keys in objects do
-	  ;; only draw onscreen objects
-	  (when (colliding-with-bounding-box object top left right bottom)
-	    (draw object)
-	    (after-draw-object self object))))
+      (draw-object-layer self)
       ;; possibly redraw cursor to ensure visibility.
       (when (and (xelfp %cursor) %redraw-cursor)
 	(draw %cursor))
@@ -1091,11 +1106,11 @@ block found, or nil if none is found."
 		      (try parent)))
 		  ;; try buffer objects
 		  (block trying
-		    (loop for object being the hash-values of %objects
-			  do (let ((result (try object)))
-			       (when result 
-				 (setf object-p t)
-				 (return-from trying result))))))))
+		    (dolist (object (nreverse (z-sort (get-objects self))))
+		      (let ((result (try object)))
+			(when result 
+			  (setf object-p t)
+			  (return-from trying result))))))))
 	  (values result object-p))))))
   
 (defparameter *minimum-drag-distance* 6)
@@ -1267,7 +1282,8 @@ block found, or nil if none is found."
 		    (when drag-parent
 		      (unplug-from-parent drag))
 		    (if %object-p
-			(move-to drag drop-x drop-y)
+			(progn (move-to drag drop-x drop-y)
+			       (after-drag-hook drag))
 			(if (null hover)
 			    ;; don't drop the shell into the world
 			    (when (not (object-eq *shell* drag))
@@ -1275,7 +1291,7 @@ block found, or nil if none is found."
 			      (if (%quadtree-node drag)
 				  ;; gameworld
 				  (add-object self drag drop-x drop-y)
-				  ;; shell
+				  ;; shell (disabled for now)
 				(add-object self drag drop-x drop-y)))
 			    ;; dropping on another block
 			    (if (accept hover drag)

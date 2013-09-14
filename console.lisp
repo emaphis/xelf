@@ -700,7 +700,7 @@ window size. Otherwise (the default) one onscreen pixel equals one
 unit of buffer space, so that more of the buffer shows if the window
 becomes larger.")
  
-(defparameter *z-near* 100)
+(defparameter *z-near* 10000)
 (defparameter *z-far* 0)
 
 (defvar *use-texture-blending* t)

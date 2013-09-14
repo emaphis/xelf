@@ -35,8 +35,9 @@
 		(symbol (symbol-name thing))
 		(string thing))))
     (coerce 
-     (string-downcase 
-      (string-trim " " name))
+     (substitute #\Space #\- 
+		 (string-downcase 
+		  (string-trim " " name)))
      'simple-string)))
 
 (defun-memo ugly-symbol (string)
@@ -444,6 +445,8 @@ non-nil to indicate that the block was accepted, nil otherwise."
   ;; (setf %parent nil)
   ;; (add-object (current-buffer) self))
 
+(define-method after-release-hook block ())
+
 (define-method unplug block (input)
   "Disconnect the block INPUT from this block."
   (with-fields (inputs parent) self
@@ -687,7 +690,8 @@ See `keys.lisp' for the full table of key and modifier symbols.
 (define-method tap block (x y))
 
 (define-method alternate-tap block (x y)
-  (toggle-halo self))
+  (when (shell-open-p) 
+    (toggle-halo self)))
 
 (define-method scroll-tap block (x y)
   (declare (ignore x y))
@@ -732,9 +736,9 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  (return-from searching this))
 	(setf this next)))))
 
-(define-method after-release-hook block ())
-
 (define-method after-place-hook block () nil)
+
+(define-method after-drag-hook block () nil)
 
 ;;; Focus events (see also buffers.lisp)
 
