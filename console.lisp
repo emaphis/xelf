@@ -751,10 +751,12 @@ becomes larger.")
 (defvar *window-z* 100)
 
 (defun window-pointer-x (&optional (x *pointer-x*))
-  (+ x *window-x*))
+  (+ *window-x*
+     (* x (/ 1 (/ *screen-width* *nominal-screen-width*)))))
 
 (defun window-pointer-y (&optional (y *pointer-y*))
-  (+ y *window-y*))
+  (+ *window-y*
+     (* y (/ 1 (/ *screen-height* *nominal-screen-height*)))))
   
 (defun transform-window (&key (x 0) (y 0) (z 0) (scale-x 1.0) (scale-y 1.0) (scale-z 1.0))
   (setf *window-x* x)
