@@ -254,7 +254,10 @@
 
 (define-method hit shell (x y)
   (when (within-extents x y %x %y (+ %x %width) (+ %y %height))
-    self))
+    (flet ((try (thing)
+	     (hit thing x y)))
+      (or (some #'try (%inputs %%output))
+	  self))))
 
 (define-method tap shell (x y)
   (focus-on-entry self))
