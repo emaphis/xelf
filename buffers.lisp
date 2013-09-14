@@ -990,9 +990,19 @@ slowdown. See also quadtree.lisp")
   (loop for object being the hash-keys of %objects 
 	do (unless (xelfp object) (remhash (the simple-string object) %objects))))
 
+(define-method update-window-movement buffer ()
+  (with-field-values (followed-object drag cursor) self
+    (let ((thing (or followed-object
+		     (when (holding-shift) drag)
+		     cursor)))
+      (when (xelfp thing)
+	(glide-follow self thing)
+	(update-window-glide self)))))
+
 (define-method update buffer ()
   (with-field-values (objects drag cursor) self
     ;; clean up after destroyed shell if needed
+
     (when (and *shell* (not (xelfp *shell*)))
       (setf *shell-open-p* nil)
       (setf %inputs (delete *shell* %inputs :test 'equal)))
@@ -1000,6 +1010,7 @@ slowdown. See also quadtree.lisp")
     (when (null %quadtree)
       (install-quadtree self))
     (assert %quadtree)
+    (update-window-movement self)
     (unless %paused
       (with-buffer self
 	;; enable quadtree for collision detection
@@ -1017,16 +1028,7 @@ slowdown. See also quadtree.lisp")
 	  (loop for object being the hash-values in objects do
 	    (when (xelfp object)
 	      (unless (eq :passive (field-value :collision-type object))
-		(quadtree-collide object))))
-	;; update window movement
-	(let ((thing (or 
-			%followed-object
-			(when (holding-shift) drag)
-			cursor)))
-	  (when (xelfp thing)
-	    (glide-follow self thing)
-	    (update-window-glide self))))))
-    ;;
+		(quadtree-collide object)))))))
     ;; now outside the quadtree,
     ;; possibly update the program layer
     (with-buffer self
