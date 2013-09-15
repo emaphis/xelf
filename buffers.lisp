@@ -477,7 +477,7 @@
 	(setf (%z object) (cfloat z)))
       (clear-saved-location object)
       (quadtree-insert-maybe object)
-      (after-place-hook object))))
+      (after-add-hook object))))
       
 (define-method remove-object buffer (object)
   (destroy-halo object)
@@ -1002,7 +1002,6 @@ slowdown. See also quadtree.lisp")
 (define-method update buffer ()
   (with-field-values (objects drag cursor) self
     ;; clean up after destroyed shell if needed
-
     (when (and *shell* (not (xelfp *shell*)))
       (setf *shell-open-p* nil)
       (setf %inputs (delete *shell* %inputs :test 'equal)))

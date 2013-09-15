@@ -736,7 +736,7 @@ See `keys.lisp' for the full table of key and modifier symbols.
 	  (return-from searching this))
 	(setf this next)))))
 
-(define-method after-place-hook block () nil)
+(define-method after-add-hook block () nil)
 
 (define-method after-drag-hook block () nil)
 

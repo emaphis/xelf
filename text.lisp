@@ -49,10 +49,16 @@
   (auto-fit :initform t)
   (visible :initform t))
 
+(define-method can-pick text () t)
+(define-method pick text () (or %parent self))
+
 (define-method accept text (other))
 
 (define-method enter text ()
   (newline self))
+
+(define-method set-read-only text (&optional (value t))
+  (setf %read-only value))
 
 (define-method handle-event text (event)
   (handle-text-event self event))
@@ -66,18 +72,16 @@
 (defparameter *next-screen-context-lines* 3)
 
 (define-method set-font text (font)
-  (assert (stringp font))
-  (assert (eq :font (resource-type (find-resource font))))
   (setf %font font))
 
 (define-method set-background-color text (color)
-  (assert (stringp color))
-  (assert (eq :color (resource-type (find-resource color))))
+  ;; (assert (stringp color))
+  ;; (assert (eq :color (resource-type (find-resource color))))
   (setf %background-color color))
 
 (define-method set-foreground-color text (color)
-  (assert (stringp color))
-  (assert (eq :color (resource-type (find-resource color))))
+  ;; (assert (stringp color))
+  ;; (assert (eq :color (resource-type (find-resource color))))
   (setf %foreground-color color))
 
 (define-method update text ()
@@ -357,10 +361,11 @@
       ;; measure text
       (let ((line-height (font-height font)))
 	  ;; draw background
-	(draw-patch self x y 
-		    (+ x width)
-		    (+ y height)
-		    :color (or %background-color (find-color self)))
+	(when %background-color
+	    (draw-patch self x y 
+			(+ x width)
+			(+ y height)
+			:color (or %background-color (find-color self))))
 	;; draw text
 	(let* ((x0 (+ x *text-margin*))
 	       (y0 (+ y *text-margin*))

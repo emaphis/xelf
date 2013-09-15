@@ -33,22 +33,23 @@
     (:documentation "A 2d game engine in Common Lisp.")
   (:use :common-lisp) 
   (:export null-block *frequency* *output-chunksize* *output-channels*
-cfloat halt-sample *dt* *copyright-notice* *author*
-without-style-warnings *font-texture-scale* *message-hook-functions*
-exit-xelf add-to-list shell-open-p z-sort modify-joystick-profile
-defproject start stop selection cut copy paste paste-here
-clear-clipboard copy-to-clipboard paste-at-pointer at-next-update
-*next-update-hook* eval-in-emacs autoload *already-serialized* browse
-back selected-object bounding-box-contains *preload-resources*
-preload-resources *always-show-sidebar* *preload-images*
-*preload-samples* prototype-variable-name *update-function*
-kill-buffer *target* toggle-play *blocks* shut-down later later-at
-toggle-glass glass-show glass-hide glass-show-at later-when start-up
-seconds->frames keyboard-held-p keyboard-pressed-p holding-control
-transform-window *scale-output-to-window* keyboard-released-p *edit*
-with-font *font* find-heading keyboard-time-in-current-state
-*current-directory* current-directory pretty-string ugly-symbol
-*pointer-x* *pointer-y* is-joystick-event *self* is-raw-joystick-event
+cfloat halt-sample *dt* *copyright-notice* *author* defentry
+make-paragraph make-sentence without-style-warnings
+*font-texture-scale* *message-hook-functions* exit-xelf add-to-list
+shell-open-p z-sort modify-joystick-profile defproject start stop
+selection cut copy paste paste-here clear-clipboard copy-to-clipboard
+paste-at-pointer at-next-update *next-update-hook* eval-in-emacs
+autoload *already-serialized* browse back selected-object
+bounding-box-contains *preload-resources* preload-resources
+*always-show-sidebar* *preload-images* *preload-samples*
+prototype-variable-name *update-function* kill-buffer *target*
+toggle-play *blocks* shut-down later later-at toggle-glass glass-show
+glass-hide glass-show-at later-when start-up seconds->frames
+keyboard-held-p keyboard-pressed-p holding-control transform-window
+*scale-output-to-window* keyboard-released-p *edit* with-font *font*
+find-heading keyboard-time-in-current-state *current-directory*
+current-directory pretty-string ugly-symbol *pointer-x* *pointer-y*
+is-joystick-event *self* is-raw-joystick-event
 keyboard-time-in-previous-state *updates* keyboard-down-p *buffers*
 keyboard-keys-down keyboard-modifier-down-p find-buffer find-buffer
 *socket-size* keyboard-modifiers draw-filled-circle draw-aa-circle
