@@ -40,7 +40,8 @@
 	       (:file "sidebar" :depends-on ("halo"))
 	       (:file "shell" :depends-on ("sidebar"))
 	       (:file "commands" :depends-on ("shell"))
-	       (:file "buffers" :depends-on ("commands"))))
+	       (:file "buffers" :depends-on ("commands"))
+	       (:file "path" :depends-on ("buffers"))))
 
 	       ;; (:file "syntax" :depends-on ("blocks"))))
 ;	       (:file "trees" :depends-on ("phrase"))

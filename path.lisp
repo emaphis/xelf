@@ -236,39 +236,39 @@
 (defun node-successors (path node path-turn-number goal-row goal-column)
   (delq nil 
 	(mapcar 
-	 (lambda (direction)
-	   (let ((grid (path-grid path))
-		 (path-map (path-map path))
-		 (new-G (+ 1 (node-G node)))
-		 (successor nil))
-	     (multiple-value-bind (r c) 
-		 (step-in-direction 
-		  (node-column node)
-		  (node-row node)
-		  direction)
-	       ;; 
-	       (if (array-in-bounds-p grid r c)
-		   (progn 
-		     (setf successor (aref path-map r c))
-		     
-		     (if (or 
-			  ;; always allow the goal square even when it's an obstacle.
-			  (and (equal r goal-row) (equal c goal-column))
-			  ;; ignore non-walkable squares and closed squares,
-			  (and (not (first-in-category (grid-get grid r c)
-						       :obstacle))
-			       (not (equal path-turn-number (node-closed successor)))))
-			 ;; if successor is open and existing path is better
-			 ;; or as good as new path, destroy the successor
-			 ;; if successor is not open, proceed 
-			 (if (equal path-turn-number (node-open successor))
-			     (if (< new-G (node-G successor))
-				 successor
-				 nil)
-			     successor)
-			 nil))
-		   nil)))
-	   *directions*))))
+	 #'(lambda (direction)
+	     (let ((grid (path-grid path))
+		   (path-map (path-map path))
+		   (new-G (+ 1 (node-G node)))
+		   (successor nil))
+	       (multiple-value-bind (r c) 
+		   (step-in-direction 
+		    (node-column node)
+		    (node-row node)
+		    direction)
+		 ;; 
+		 (if (array-in-bounds-p grid r c)
+		     (progn 
+		       (setf successor (aref path-map r c))
+		       
+		       (if (or 
+			    ;; always allow the goal square even when it's an obstacle.
+			    (and (equal r goal-row) (equal c goal-column))
+			    ;; ignore non-walkable squares and closed squares,
+			    (and (not (first-in-category (grid-get grid r c)
+							 :obstacle))
+				 (not (equal path-turn-number (node-closed successor)))))
+			   ;; if successor is open and existing path is better
+			   ;; or as good as new path, destroy the successor
+			   ;; if successor is not open, proceed 
+			   (if (equal path-turn-number (node-open successor))
+			       (if (< new-G (node-G successor))
+				   successor
+				   nil)
+			       successor)
+			   nil))
+		     nil))))
+	 *directions*)))
   
   ;; Now we come to the pathfinding algorithm itself. 
   
@@ -309,19 +309,19 @@ the goal."
 			 (equal goal-column (node-column selected-node)))
 		(return-from finding selected-node))
 	      ;; process adjacent walkable non-closed nodes
-	      (mapc (lambda (node)
-		      ;; is this cell already on the open list?
-		      (if (equal path-turn-number (node-open node))
-			  ;; yes. update scores if needed
-			  (score-node path node path-turn-number
-				      selected-node goal-row goal-column)
-			  (progn 
-			    ;; it's not on the open list. add it to the open list
-			    (score-node path node path-turn-number selected-node
-					goal-row goal-column)
-			    (open-node path node))))
+	      (mapc #'(lambda (node)
+			;; is this cell already on the open list?
+			(if (equal path-turn-number (node-open node))
+			    ;; yes. update scores if needed
+			    (score-node path node path-turn-number
+					selected-node goal-row goal-column)
+			    (progn 
+			      ;; it's not on the open list. add it to the open list
+			      (score-node path node path-turn-number selected-node
+					  goal-row goal-column)
+			      (open-node path node))))
 		    ;; map over adjacent nodes
-		    (node-successors selected-node 
+		    (node-successors path selected-node 
 				     path-turn-number
 				     goal-row goal-column)))))
     ;; did we find a path? 
