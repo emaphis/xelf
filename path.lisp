@@ -30,12 +30,48 @@
 (in-package :xelf)
 
 (defstruct path
+  finder ;; Who is finding this path? 
   buffer ;; Pointer to associated buffer. 
   grid ;; Array of pathfinding data nodes.
+  height width
   heap ;; Heap array of open pathfinding nodes.
   end ;; Pointer to last heap array position.
   turn ;; Integer turn number
   )
+
+(defparameter *path-grid-resolution* 128)
+
+(defun obstructed (path row column)
+  (with-field-values (height width) 
+      (path-buffer path)
+    (let ((*quadtree* (%quadtree (path-buffer path))))
+      (multiple-value-bind (top left right bottom)
+	  (bounding-box (path-finder path))
+	(let* ((ux (/ width (path-width path)))
+	       (uy (/ height (path-height path)))
+	       (utop (* row uy))
+	       (uleft (* column ux))
+	       (uright (* (+ column 1) ux))
+	       (ubottom (* (+ row 1) uy))
+	       (dy (- top utop))
+	       (dx (- left uleft))
+	       (vtop utop)
+	       (vleft uleft)	
+	       (vright (+ vleft (%width (path-finder path))))
+	       (vbottom (+ vtop (%height (path-finder path)))))
+	  (block colliding
+	    (flet ((check (object)
+		     (when (and (xelfp object)
+				(field-value :collision-type object)
+				(colliding-with-bounding-box
+				 object vtop vleft vright vbottom))
+		       (return-from colliding object))))
+	      (prog1 nil
+		(quadtree-process 
+		 (cfloat vtop)
+		 (cfloat vleft)
+		 (cfloat vright)
+		 (cfloat vbottom) #'check)))))))))
 
 (defstruct node 
   row 
@@ -50,11 +86,17 @@
   open ; equal to path's path-turn-number when on open list
   )
 
-(defun create-path (&key height width buffer)
-  (assert (object-p buffer))
+(defun create-path (finder &key
+			 (height *path-grid-resolution*)
+			 (width *path-grid-resolution*) 
+			 (buffer (current-buffer)))
+  (assert (xelfp buffer))
   (let ((path (make-path :buffer buffer
+			 :finder finder
 			 :grid (make-array (list height width))
 			 :heap (make-array (* height width))
+			 :height height
+			 :width width
 			 :turn 1 :end 0)))
     (prog1 path
       (dotimes (r height)
@@ -66,27 +108,27 @@
 ;; use a minheap to store the open set.
 
 (defun open-node (path node)
-  (let* ((path-heap-end (if (null (path-heap-end path))
-			    (setf (path-heap-end path) 1)
-			    (incf (path-heap-end path))))
+  (let* ((path-heap-end (if (null (path-end path))
+			    (setf (path-end path) 1)
+			    (incf (path-end path))))
 	 (path-heap (path-heap path))
  	 (ptr path-heap-end)
 	 (parent nil)
 	 (finished nil))
     ;; make it easy to check whether node is open
-    (setf (node-open node) (path-turn-number path))
+    (setf (node-open node) (path-turn path))
     ;; add node to end of heap 
     (setf (aref path-heap path-heap-end) node)
     ;; let node rise to appropriate place in heap
     (while (and (not finished) (< 1 ptr))
-      (setf parent (/ ptr 2))
+      (setf parent (truncate (/ ptr 2)))
       ;; should it rise? 
       (if (< (node-F node) (node-F (aref path-heap parent)))
 	  ;; yes. swap parent and node
 	  (progn 
 	    (setf (aref path-heap ptr) (aref path-heap parent))
 	    (setf ptr parent))
-	;; no. we're done.
+	  ;; no. we're done.
 	  (progn (setf finished t)
 		 (setf (aref path-heap ptr) node))))
     ;; do we need to set node as the new root? 
@@ -98,14 +140,14 @@
 	 ;; save root of heap to return to caller
 	 (node (aref path-heap 1))
 	 (last nil)
-	 (path-heap-end (path-heap-end path))
+	 (path-heap-end (path-end path))
 	 (ptr 1)
 	 (left 2)
 	 (right 3)
 	 (finished nil))
     ;; is there only one node?
     (if (equal 1 path-heap-end)
-	(setf (path-heap-end path) nil)
+	(setf (path-end path) nil)
       (if (null path-heap-end)
 	  nil
 	;; remove last node of heap and install as root of heap
@@ -113,10 +155,10 @@
 	   (setf last (aref path-heap path-heap-end))
 	   (setf (aref path-heap 1) last)
 	   ;; shrink heap
-	   (decf (path-heap-end path))
+	   (decf (path-end path))
 	   (decf path-heap-end)
 	   ;;
-	   (setf (node-closed node) (path-turn-number path))
+	   (setf (node-closed node) (path-turn path))
 	   ;;
 	   ;; figure out where former last element should go
 	   ;;
@@ -189,7 +231,7 @@
 	  ;;
 	  ;; yes. update scores and re-heap.
 	  (let ((heap (path-heap path))
-		(heap-end (path-heap-end path))
+		(heap-end (path-end path))
 		(ptr 1)
 		(par nil)
 		(finished nil))
@@ -198,12 +240,12 @@
 	    (setf (node-F node) F)
 	    (setf (node-parent node) new-parent-node)
 	    ;;
-	    (message "Better score found.")
+	    ;; Better score found.
 	    ;; 
 	    ;; find current location of node in heap
 	    (while (and (not finished) (< ptr heap-end))
 	      (when (equal node (aref heap ptr))
-		(message "Found node.")
+		;; Found node.
 		;;
 		;; its score could only go down, so move it up in the
 		;; heap if necessary.
@@ -234,11 +276,10 @@
 	))))
 	      
 (defun node-successors (path node path-turn-number goal-row goal-column)
-  (delq nil 
+  (delete nil 
 	(mapcar 
 	 #'(lambda (direction)
 	     (let ((grid (path-grid path))
-		   (path-map (path-map path))
 		   (new-G (+ 1 (node-G node)))
 		   (successor nil))
 	       (multiple-value-bind (r c) 
@@ -249,14 +290,13 @@
 		 ;; 
 		 (if (array-in-bounds-p grid r c)
 		     (progn 
-		       (setf successor (aref path-map r c))
+		       (setf successor (aref grid r c))
 		       
 		       (if (or 
 			    ;; always allow the goal square even when it's an obstacle.
 			    (and (equal r goal-row) (equal c goal-column))
 			    ;; ignore non-walkable squares and closed squares,
-			    (and (not (first-in-category (grid-get grid r c)
-							 :obstacle))
+			    (and (not (obstructed path r c))
 				 (not (equal path-turn-number (node-closed successor)))))
 			   ;; if successor is open and existing path is better
 			   ;; or as good as new path, destroy the successor
@@ -272,19 +312,23 @@
   
   ;; Now we come to the pathfinding algorithm itself. 
   
-(defun find-path (path starting-row starting-column goal-row goal-column)
+(defun find-path (path x0 y0 x1 y1)
   "Find a path from the starting point to the goal in PATH using A*.
 Returns a list of directional keywords an AI can follow to reach
 the goal."
-  (let ((selected-node nil)
-	(path-turn-number (incf (path-turn-number path)))
-	(pos nil)
-	(found nil)
-	(target-node nil)
-	(path nil)
-	(F 0) (G 0) (H 0))
+  (let* ((selected-node nil)
+	 (path-turn-number (incf (path-turn path)))
+	 (pos nil)
+	 (found nil)
+	 (target-node nil)
+	 (coordinates nil)
+	 (F 0) (G 0) (H 0)
+	 (starting-row (round (/ y0 (path-height path))))
+	 (starting-column (round (/ x0 (path-width path))))
+	 (goal-row (round (/ y1 (path-height path))))
+	 (goal-column (round (/ x1 (path-width path)))))
     ;; reset the pathfinding heap
-    (setf (path-heap-end path) nil)
+    (setf (path-end path) nil)
     ;; add the starting node to the open set
     (setf G 0)
     (setf H (max (abs (- starting-row goal-row))
@@ -331,22 +375,36 @@ the goal."
 	      (current-node nil))
 	  (while (setf current-node (node-parent previous-node))
 	    ;; what direction do we travel to get from current to previous? 
-	    (push (direction-to (node-row current-node)
-				(node-column current-node)
-				(node-row previous-node)
-				(node-column previous-node))
-		  path)
+	    (push (list (node-row current-node)
+			(node-column current-node))
+		  coordinates)
 	    (setf previous-node current-node))
 	  ;; return the finished path
-	  path)
+	  coordinates)
 	;; return nil
 	nil)))
 
-;; (defun path-to (grid from to)
-;;   (find-path grid 
-;; 	     (field-value :row from)
-;; 	     (field-value :column from)
-;; 	     (field-value :row to)
-;; 	     (field-value :column to)))
+(defun row-to-y (path row) 
+  (let ((cy (/ (%height (path-buffer path))
+	       (path-height path))))
+    (* cy row)))
+
+(defun column-to-x (path column) 
+  (let ((cx (/ (%width (path-buffer path))
+	       (path-width path))))
+    (* cx column)))
+
+(defun address-to-waypoint (path address)
+  (destructuring-bind (row column) address
+    (list (round (column-to-x path column))
+	  (round (row-to-y path row)))))
+
+(defun find-path-waypoints (path x0 y0 x1 y1)
+  (mapcar #'(lambda (address)
+	      (address-to-waypoint path address))
+	  (find-path path (truncate x0) 
+		     (truncate y0)
+		     (truncate x1)
+		     (truncate y1))))
 
 ;;; path.lisp ends here
