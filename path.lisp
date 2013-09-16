@@ -39,7 +39,7 @@
   turn ;; Integer turn number
   )
 
-(defparameter *path-grid-resolution* 256)
+(defparameter *path-grid-resolution* 320)
 
 (defun row-to-y (path row) 
   (let ((cy (/ (%height (path-buffer path))
@@ -54,15 +54,16 @@
 (defun obstructed (path row column)
   (with-field-values (height width) 
       (path-buffer path)
-    (let ((*quadtree* (%quadtree (path-buffer path))))
+    (let ((*quadtree* (%quadtree (path-buffer path)))
+	  (border 8))
       (multiple-value-bind (top left right bottom)
 	  (bounding-box (path-finder path))
 	(let* ((utop (row-to-y path row))
 	       (uleft (column-to-x path column))
-	       (vtop utop)
-	       (vleft uleft)	
-	       (vright (+ vleft (- right left)))
-	       (vbottom (+ vtop (- bottom top))))
+	       (vtop (- utop border))
+	       (vleft (- uleft border))
+	       (vright (+ border vleft (- right left)))
+	       (vbottom (+ border vtop (- bottom top))))
 ;;	  (message "VTOP ~S ~S ~S ~S" vtop vleft vright vbottom) 
 	  (block colliding
 	    (flet ((check (object)
