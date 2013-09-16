@@ -41,33 +41,38 @@
 
 (defparameter *path-grid-resolution* 256)
 
+(defun row-to-y (path row) 
+  (let ((cy (/ (%height (path-buffer path))
+	       (path-height path))))
+    (cfloat (* cy row))))
+
+(defun column-to-x (path column) 
+  (let ((cx (/ (%width (path-buffer path))
+	       (path-width path))))
+    (cfloat (* cx column))))
+
 (defun obstructed (path row column)
   (with-field-values (height width) 
       (path-buffer path)
     (let ((*quadtree* (%quadtree (path-buffer path))))
       (multiple-value-bind (top left right bottom)
 	  (bounding-box (path-finder path))
-	(let* ((ux (/ width (path-width path)))
-	       (uy (/ height (path-height path)))
-	       (utop (* row uy))
-	       (uleft (* column ux))
-	       (uright (* (+ column 1) ux))
-	       (ubottom (* (+ row 1) uy))
-	       (dy (- top utop))
-	       (dx (- left uleft))
+	(let* ((utop (row-to-y path row))
+	       (uleft (column-to-x path column))
 	       (vtop utop)
 	       (vleft uleft)	
-	       (vright (+ vleft (%width (path-finder path))))
-	       (vbottom (+ vtop (%height (path-finder path)))))
+	       (vright (+ vleft (- right left)))
+	       (vbottom (+ vtop (- bottom top))))
+;;	  (message "VTOP ~S ~S ~S ~S" vtop vleft vright vbottom) 
 	  (block colliding
 	    (flet ((check (object)
 		     (when (and (xelfp object)
 				(field-value :collision-type object)
-				(colliding-with-bounding-box
-				 object vtop vleft vright vbottom))
+				(not (object-eq object (path-finder path)))
+				(has-tag object :solid))
 		       (return-from colliding object))))
 	      (prog1 nil
-		(quadtree-process 
+		(quadtree-map-collisions 
 		 (cfloat vtop)
 		 (cfloat vleft)
 		 (cfloat vright)
@@ -209,9 +214,12 @@
 				  (node-row node)))
 	 (G (+ 1 (node-G new-parent-node)))
 	 
- 	 (H (* (max (abs (- (node-row node) goal-row))
-		    (abs (- (node-column node) goal-column)))
-	       1.001))
+ 	 (H (* (distance (node-column node)
+			 (node-row node)
+			 goal-column goal-row)
+		;; (max (abs (- (node-row node) goal-row))
+		;;     (abs (- (node-column node) goal-column)))
+	       1))
 	 (F (+ G H)))
     ;; 
     ;; is this a new node, i.e. not on the open list? 
@@ -389,16 +397,6 @@ the goal."
 	  coordinates)
 	;; return nil
 	nil)))
-
-(defun row-to-y (path row) 
-  (let ((cy (/ (%height (path-buffer path))
-	       (path-height path))))
-    (* cy row)))
-
-(defun column-to-x (path column) 
-  (let ((cx (/ (%width (path-buffer path))
-	       (path-width path))))
-    (* cx column)))
 
 (defun address-to-waypoint (path address)
   (destructuring-bind (row column) address
