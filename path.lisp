@@ -320,13 +320,19 @@ the goal."
 	 (path-turn-number (incf (path-turn path)))
 	 (pos nil)
 	 (found nil)
+	 (path-height (path-height path))
+	 (path-width (path-width path))
+	 (buffer-height (%height (path-buffer path)))
+	 (buffer-width (%width (path-buffer path)))
+	 (cx (/ buffer-width path-width))
+	 (cy (/ buffer-height path-height))
 	 (target-node nil)
 	 (coordinates nil)
 	 (F 0) (G 0) (H 0)
-	 (starting-row (round (/ y0 (path-height path))))
-	 (starting-column (round (/ x0 (path-width path))))
-	 (goal-row (round (/ y1 (path-height path))))
-	 (goal-column (round (/ x1 (path-width path)))))
+	 (starting-row (round (/ y0 cy)))
+	 (starting-column (round (/ x0 cx)))
+	 (goal-row (round (/ y1 cy)))
+	 (goal-column (round (/ x1 cx))))
     ;; reset the pathfinding heap
     (setf (path-end path) nil)
     ;; add the starting node to the open set
@@ -406,5 +412,11 @@ the goal."
 		     (truncate y0)
 		     (truncate x1)
 		     (truncate y1))))
+
+(defun print-path (foo stream)
+  (format stream "#<% XELF PATH>"))
+
+(defmethod print-object ((foo xelf::path) stream)
+  (print-path foo stream))
 
 ;;; path.lisp ends here
