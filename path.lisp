@@ -39,7 +39,7 @@
   turn ;; Integer turn number
   )
 
-(defparameter *path-grid-resolution* 128)
+(defparameter *path-grid-resolution* 256)
 
 (defun obstructed (path row column)
   (with-field-values (height width) 
@@ -197,18 +197,18 @@
 	;;
 	;; save former last element in its new place
 	(setf (aref path-heap ptr) last)
-	node))
-  
-  ;; The ordinary distance algorithm is used to score nodes.
-  
-  (defun score-node (path node path-turn-number new-parent-node goal-row goal-column)
+    node))
+
+;; The ordinary distance algorithm is used to score nodes.
+
+(defun score-node (path node path-turn-number new-parent-node goal-row goal-column)
   "Update scores for NODE. Update heap position if necessary."
-  (let* ((direction (direction-to (node-row new-parent-node)
-				      (node-column new-parent-node)
-				      (node-row node)
-				      (node-column node)))
+  (let* ((direction (direction-to (node-column new-parent-node)
+				  (node-row new-parent-node)
+				  (node-column node)
+				  (node-row node)))
 	 (G (+ 1 (node-G new-parent-node)))
-	       
+	 
  	 (H (* (max (abs (- (node-row node) goal-row))
 		    (abs (- (node-column node) goal-column)))
 	       1.001))
@@ -272,8 +272,8 @@
 	      (incf ptr)))
 	;;
 	;; new score is not better. do nothing.
-	;(setf (node-parent node) new-parent-node)
-	))))
+					;(setf (node-parent node) new-parent-node)
+	  ))))
 	      
 (defun node-successors (path node path-turn-number goal-row goal-column)
   (delete nil 
@@ -284,8 +284,8 @@
 		   (successor nil))
 	       (multiple-value-bind (r c) 
 		   (step-in-direction 
-		    (node-column node)
 		    (node-row node)
+		    (node-column node)
 		    direction)
 		 ;; 
 		 (if (array-in-bounds-p grid r c)
