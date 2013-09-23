@@ -39,7 +39,7 @@
   turn ;; Integer turn number
   )
 
-(defparameter *path-grid-resolution* 320)
+(defparameter *path-grid-resolution* 256)
 
 (defun row-to-y (path row) 
   (let ((cy (/ (%height (path-buffer path))
