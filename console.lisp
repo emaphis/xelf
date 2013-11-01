@@ -2407,6 +2407,27 @@ of the music."
 
 (defparameter *use-antialiased-text* t)
 
+;; (defmethod _draw-string-blended-*_ ((string string) (x integer) (y integer) justify (surface sdl-surface) (font ttf-font) (color color))
+;;   (with-surface (font-surface (_render-string-blended_ string font color nil nil) t)
+;;     (set-surface-* font-surface :x x :y y)
+;;     (blit-surface font-surface surface))
+;;   surface)
+
+(defun draw-utf8-solid (string x y &key font color surface)
+  (let ((surf nil))
+    (sdl::with-foreign-color-copy (col-struct color)
+      (setf surf (make-instance 'sdl:surface :fp 
+				(sdl-ttf-cffi::render-utf8-solid 
+				 (sdl:fp font) 
+				 string
+				 (if (cffi:foreign-symbol-pointer "TTF_glue_RenderText_Solid")
+				     col-struct
+				     (+ (ash (sdl:b color) 16)
+					(ash (sdl:g color) 8)
+					(sdl:r color)))))))
+    (sdl:blit-surface surf surface)
+    surface))
+
 (defun make-text-image (font string)
   (assert (and (not (null string))
 	       (plusp (length string))))
@@ -2414,9 +2435,10 @@ of the music."
       (font-text-extents-* string font)
     (let ((surface (sdl:create-surface width height :bpp 8))
 	  (texture (first (gl:gen-textures 1)))
-	  (renderer (if *use-antialiased-text*
-			#'sdl:draw-string-blended-*
-			#'sdl:draw-string-solid-*)))
+	  (renderer #'draw-utf8-solid))
+	  ;; (renderer (if *use-antialiased-text*
+	  ;; 		#'sdl:draw-string-blended-*
+	  ;; 		#'sdl:draw-string-solid-*)))
       (prog1 texture
 	(funcall renderer string 0 0 
 		 :color (find-resource-object "white")
