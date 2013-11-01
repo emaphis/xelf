@@ -9,6 +9,7 @@
 
 (push #p"/home/dto/2x0ng/" asdf:*central-registry*)
 
+(setf sb-impl::*default-external-format* :utf-8)
 (asdf:oos 'asdf:load-op '2x0ng)
 (sb-ext:save-lisp-and-die "2x0ng.bin"
 			  :toplevel (lambda ()
